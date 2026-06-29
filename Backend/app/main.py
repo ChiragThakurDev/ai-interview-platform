@@ -4,11 +4,13 @@ from sqlalchemy import text
 from app.core.config import settings
 from app.db.session import engine
 
+from app.models.user import User
+from app.db.base import Base
+
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
 )
-
 
 @app.get("/")
 async def root():
