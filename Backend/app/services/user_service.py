@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserCreate
-from app.utils.securitu import hash_password
+from app.utils.security import hash_password
 
 class UserService:
     def __init__(self,db:Session):
