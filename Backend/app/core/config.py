@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     debug:bool
 
     secret_key:str
+    algorithm:str
 
     database_url:str
 
