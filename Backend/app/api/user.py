@@ -6,6 +6,8 @@ from app.schemas.user import UserCreate, UserResponse
 from app.services.user_service import UserService
 
 from app.auth.dependencies import get_current_user
+
+from app.auth.dependencies import get_current_admin
 from app.models.user import User
 
 router = APIRouter(
@@ -34,11 +36,25 @@ def register_user(
             detail=str(e),
         )
 
-@router.get(
-        "/me",
-        response_model=UserResponse,
-)
-def get_current_user_profile(
-        current_user:User=Depends(get_current_user),
+
+@router.get("/me")
+def get_me(
+    current_user: User = Depends(get_current_user),
 ):
-    return current_user
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "role": current_user.role,
+        "is_active": current_user.is_active,
+    }
+
+@router.get("/admin")
+def admin_dashboard(
+        current_admin: User=Depends(get_current_admin),
+):
+    return {
+            "message":"Welcome Admin!",
+            "admin":current_admin.name,
+            "email":current_admin.email,
+            }
