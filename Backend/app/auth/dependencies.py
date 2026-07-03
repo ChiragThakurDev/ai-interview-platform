@@ -25,6 +25,13 @@ def get_current_user(
             detail="Could not validate credentials",
         )
 
+    #NEW: Only access token are allowed
+    if payload.get("type") != "access":
+        raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type",
+                )
+
     # Extract email from token
     email = payload.get("sub")
 
