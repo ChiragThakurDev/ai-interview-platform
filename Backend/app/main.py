@@ -1,23 +1,44 @@
 from fastapi import FastAPI
 from sqlalchemy import text
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException
 
 from app.api.user import router as user_router
-from app.core.config import settings
-from app.db.session import engine
-
-from app.models.user import User
-from app.db.base import Base
-
 from app.api.auth import router as auth_router
 
+from app.core.config import settings
+from app.core.exception_handler import (
+    http_exception_handler,
+    validation_exception_handler,
+)
+
+from app.db.session import engine
+
+
+# -------------------------
+# CREATE APP FIRST
+# -------------------------
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
 )
 
+# -------------------------
+# EXCEPTION HANDLERS
+# -------------------------
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+
+# -------------------------
+# ROUTES
+# -------------------------
 app.include_router(user_router)
 app.include_router(auth_router)
 
+
+# -------------------------
+# ROOT
+# -------------------------
 @app.get("/")
 async def root():
     return {
@@ -25,6 +46,9 @@ async def root():
     }
 
 
+# -------------------------
+# HEALTH CHECK
+# -------------------------
 @app.get("/health")
 def health_check():
     try:

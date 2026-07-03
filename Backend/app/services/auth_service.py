@@ -3,6 +3,7 @@ from app.utils.security import (
     verify_password,
     hash_password,
 )
+
 from app.utils.jwt import (
     create_access_token,
     create_refresh_token,
@@ -11,34 +12,37 @@ from app.utils.jwt import (
     verify_access_token,
 )
 
+from app.utils.email import (
+    send_verification_email,
+    send_reset_password_email,
+)
+
+from app.core.exceptions import AuthException
+
 
 class AuthService:
 
     def __init__(self, db):
         self.repository = UserRepository(db)
 
+    # -------------------------
+    # LOGIN
+    # -------------------------
     def login(self, email: str, password: str):
         user = self.repository.get_by_email(email)
 
         if not user:
-            raise ValueError("Invalid email or password")
+            raise AuthException.invalid_credentials()
 
-        if not verify_password(
-            password,
-            user.password_hash,
-        ):
-            raise ValueError("Invalid email or password")
+        if not verify_password(password, user.password_hash):
+            raise AuthException.invalid_credentials()
 
         access_token = create_access_token(
-            {
-                "sub": user.email,
-            }
+            {"sub": user.email}
         )
 
         refresh_token = create_refresh_token(
-            {
-                "sub": user.email,
-            }
+            {"sub": user.email}
         )
 
         return {
@@ -47,29 +51,30 @@ class AuthService:
             "token_type": "bearer",
         }
 
+    # -------------------------
+    # REFRESH TOKEN
+    # -------------------------
     def refresh_access_token(self, refresh_token: str):
         payload = verify_access_token(refresh_token)
 
         if payload is None:
-            raise ValueError("Invalid refresh token")
+            raise AuthException.invalid_token()
 
         if payload.get("type") != "refresh":
-            raise ValueError("Invalid token type")
+            raise AuthException.invalid_token()
 
         email = payload.get("sub")
 
         if email is None:
-            raise ValueError("Invalid refresh token")
+            raise AuthException.invalid_token()
 
         user = self.repository.get_by_email(email)
 
         if user is None:
-            raise ValueError("User not found")
+            raise AuthException.not_found()
 
         access_token = create_access_token(
-            {
-                "sub": user.email,
-            }
+            {"sub": user.email}
         )
 
         return {
@@ -78,94 +83,87 @@ class AuthService:
             "token_type": "bearer",
         }
 
+    # -------------------------
+    # VERIFY EMAIL
+    # -------------------------
     def verify_email(self, token: str):
-        print("\n======================")
-        print("Received token:", repr(token))
-
         token = token.strip()
 
         payload = verify_access_token(token)
 
-        print("Decoded payload:", payload)
-        print("======================\n")
-
         if payload is None:
-            raise ValueError("Invalid verification token")
+            raise AuthException.invalid_token()
 
         if payload.get("type") != "verify_email":
-            raise ValueError("Invalid token type")
+            raise AuthException.invalid_token()
 
         email = payload.get("sub")
 
         if email is None:
-            raise ValueError("Invalid verification token")
+            raise AuthException.invalid_token()
 
         user = self.repository.get_by_email(email)
 
         if user is None:
-            raise ValueError("User not found")
+            raise AuthException.not_found()
 
         if user.is_verified:
-            raise ValueError("Email already verified")
+            return {
+                "message": "Email already verified"
+            }
 
         user.is_verified = True
-
         self.repository.update(user)
 
         return {
             "message": "Email verified successfully"
         }
 
+    # -------------------------
+    # FORGOT PASSWORD
+    # -------------------------
     def forgot_password(self, email: str):
         user = self.repository.get_by_email(email)
 
-        # Prevent email enumeration
+        # Always return same response (security best practice)
         if user is None:
             return {
                 "message": "If the email exists, a password reset link has been sent."
             }
 
         reset_token = create_password_reset_token(
-            {
-                "sub": user.email,
-            }
+            {"sub": user.email}
         )
 
+        send_reset_password_email(user.email, reset_token)
+
         return {
-            "message": "Password reset token generated successfully.",
-            "reset_token": reset_token,
+            "message": "If the email exists, a password reset link has been sent."
         }
 
-    def reset_password(
-        self,
-        token: str,
-        new_password: str,
-    ):
-        # Verify token
+    # -------------------------
+    # RESET PASSWORD
+    # -------------------------
+    def reset_password(self, token: str, new_password: str):
         payload = verify_access_token(token)
 
         if payload is None:
-            raise ValueError("Invalid reset token")
+            raise AuthException.invalid_token()
 
-        # Only password reset tokens are allowed
         if payload.get("type") != "reset_password":
-            raise ValueError("Invalid token type")
+            raise AuthException.invalid_token()
 
         email = payload.get("sub")
 
         if email is None:
-            raise ValueError("Invalid reset token")
+            raise AuthException.invalid_token()
 
-        # Find user
         user = self.repository.get_by_email(email)
 
         if user is None:
-            raise ValueError("User not found")
+            raise AuthException.not_found()
 
-        # Hash new password
         user.password_hash = hash_password(new_password)
-
-        # Save changes
         self.repository.update(user)
 
         return {
