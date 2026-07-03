@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.db.dependencies import get_db
-from app.schemas.auth import (TokenResponse, RefreshTokenRequest,)
+from app.schemas.auth import (TokenResponse, RefreshTokenRequest, ForgotPasswordRequest, ResetPasswordRequest,)
 from app.services.auth_service import AuthService
 
 router = APIRouter(
@@ -70,4 +70,32 @@ def verify_email(
         raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=str(e),
-                )
+                
+            )
+
+@router.post("/forgot-password")
+def forgot_password(
+    request: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    service = AuthService(db)
+
+    return service.forgot_password(request.email)
+
+@router.post("/reset-password")
+def reset_password(
+    request: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    service = AuthService(db)
+
+    try:
+        return service.reset_password(
+            token=request.token,
+            new_password=request.new_password,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )

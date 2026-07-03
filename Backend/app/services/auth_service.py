@@ -1,9 +1,13 @@
 from app.repositories.user_repository import UserRepository
-from app.utils.security import verify_password
+from app.utils.security import (
+    verify_password,
+    hash_password,
+)
 from app.utils.jwt import (
     create_access_token,
     create_refresh_token,
     create_email_verification_token,
+    create_password_reset_token,
     verify_access_token,
 )
 
@@ -110,4 +114,60 @@ class AuthService:
 
         return {
             "message": "Email verified successfully"
+        }
+
+    def forgot_password(self, email: str):
+        user = self.repository.get_by_email(email)
+
+        # Prevent email enumeration
+        if user is None:
+            return {
+                "message": "If the email exists, a password reset link has been sent."
+            }
+
+        reset_token = create_password_reset_token(
+            {
+                "sub": user.email,
+            }
+        )
+
+        return {
+            "message": "Password reset token generated successfully.",
+            "reset_token": reset_token,
+        }
+
+    def reset_password(
+        self,
+        token: str,
+        new_password: str,
+    ):
+        # Verify token
+        payload = verify_access_token(token)
+
+        if payload is None:
+            raise ValueError("Invalid reset token")
+
+        # Only password reset tokens are allowed
+        if payload.get("type") != "reset_password":
+            raise ValueError("Invalid token type")
+
+        email = payload.get("sub")
+
+        if email is None:
+            raise ValueError("Invalid reset token")
+
+        # Find user
+        user = self.repository.get_by_email(email)
+
+        if user is None:
+            raise ValueError("User not found")
+
+        # Hash new password
+        user.password_hash = hash_password(new_password)
+
+        # Save changes
+        self.repository.update(user)
+
+        return {
+            "message": "Password reset successfully"
         }

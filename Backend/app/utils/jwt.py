@@ -71,3 +71,12 @@ def verify_access_token(token: str):
     except JWTError as e:
         print("JWT ERROR:", e)
         return None
+
+
+def create_password_reset_token(data:dict):
+    return _create_token(
+            data=data,
+            expires_delta=timedelta(
+                minutes=settings.password_reset_expire_minutes),
+            token_type="reset_password",
+            )

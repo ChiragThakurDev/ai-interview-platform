@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes:int
     refresh_token_expire_days: int
     email_verification_expire_hours:int 
-
+    password_reset_expire_minutes: int
     redis_url:str
 
     model_config=SettingsConfigDict(
