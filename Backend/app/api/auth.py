@@ -5,6 +5,11 @@ from sqlalchemy.orm import Session
 from app.db.dependencies import get_db
 from app.schemas.auth import (TokenResponse, RefreshTokenRequest, ForgotPasswordRequest, ResetPasswordRequest,)
 from app.services.auth_service import AuthService
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/auth/login"
+)
 
 router = APIRouter(
     prefix="/auth",
@@ -99,3 +104,11 @@ def reset_password(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+@router.post("/logout")
+def logout(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+):
+    service = AuthService(db)
+    return service.logout(token)
+

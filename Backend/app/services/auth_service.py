@@ -19,7 +19,7 @@ from app.utils.email import (
 
 from app.core.exceptions import AuthException
 
-
+from app.utils.token_blacklist import blacklist_token
 class AuthService:
 
     def __init__(self, db):
@@ -168,4 +168,28 @@ class AuthService:
 
         return {
             "message": "Password reset successfully"
+        }
+
+
+
+    def logout(self, token: str):
+        payload = verify_access_token(token)
+
+        if payload is None:
+          raise ValueError("Invalid token")
+
+        exp = payload.get("exp")
+
+        if exp is None:
+          raise ValueError("Token has no expiration")
+
+        import time
+
+        expires_in = exp - int(time.time())
+
+        if expires_in > 0:
+          blacklist_token(token, expires_in)
+
+        return {
+            "message": "Logged out successfully"
         }
