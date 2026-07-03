@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -54,3 +54,20 @@ def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e),
         )
+
+
+@router.get("/verify-email")
+def verify_email(
+        token:str=Query(...),
+        db:Session=Depends(get_db),
+):
+    service=AuthService(db)
+
+    try:
+        return service.verify_email(token)
+
+    except ValueError as e:
+        raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+                )
