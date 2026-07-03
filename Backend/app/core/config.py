@@ -1,23 +1,38 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
-    app_name:str
-    app_version:str
-    debug:bool
+    # App
+    app_name: str
+    app_version: str
+    debug: bool
 
-    secret_key:str
-    algorithm:str
+    # JWT
+    secret_key: str
+    algorithm: str
 
-    database_url:str
+    # Database
+    database_url: str
 
-    access_token_expire_minutes:int
+    # Token Expiry
+    access_token_expire_minutes: int
     refresh_token_expire_days: int
-    email_verification_expire_hours:int 
+    email_verification_expire_hours: int
     password_reset_expire_minutes: int
-    redis_url:str
 
-    model_config=SettingsConfigDict(
-            env_file=".env",
-            case_sensitive=False,
-)
-settings=Settings()
+    # Redis
+    redis_url: str
+
+    # Email (NEW)
+    smtp_host: str
+    smtp_port: int
+    smtp_email: str
+    smtp_password: str
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+    )
+
+
+settings = Settings()
