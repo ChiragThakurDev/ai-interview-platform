@@ -1,4 +1,10 @@
+import time
+
+from app.core.config import settings
+from app.utils.refresh_token_store import store_refresh_token
+
 from app.repositories.user_repository import UserRepository
+
 from app.utils.security import (
     verify_password,
     hash_password,
@@ -7,19 +13,26 @@ from app.utils.security import (
 from app.utils.jwt import (
     create_access_token,
     create_refresh_token,
-    create_email_verification_token,
     create_password_reset_token,
     verify_access_token,
 )
 
 from app.utils.email import (
-    send_verification_email,
     send_reset_password_email,
 )
 
 from app.core.exceptions import AuthException
 
 from app.utils.token_blacklist import blacklist_token
+
+from app.utils.rate_limiter import (
+    increment_login_attempts,
+    reset_login_attempts,
+    is_login_blocked,
+)
+
+
+
 class AuthService:
 
     def __init__(self, db):
@@ -29,20 +42,35 @@ class AuthService:
     # LOGIN
     # -------------------------
     def login(self, email: str, password: str):
+
+        # Check rate limit
+        if is_login_blocked(email):
+            raise AuthException.too_many_requests()
+
         user = self.repository.get_by_email(email)
 
         if not user:
+            increment_login_attempts(email)
             raise AuthException.invalid_credentials()
 
         if not verify_password(password, user.password_hash):
+            increment_login_attempts(email)
             raise AuthException.invalid_credentials()
+
+        # Successful login
+        reset_login_attempts(email)
 
         access_token = create_access_token(
             {"sub": user.email}
         )
+        refresh_token=create_refresh_token(
+                {
+                    "sub":user.email}
+            )
 
-        refresh_token = create_refresh_token(
-            {"sub": user.email}
+        store_refresh_token(
+          token=refresh_token,
+          expires_in=settings.refresh_token_expire_days * 24 * 60 * 60,
         )
 
         return {
@@ -87,9 +115,7 @@ class AuthService:
     # VERIFY EMAIL
     # -------------------------
     def verify_email(self, token: str):
-        token = token.strip()
-
-        payload = verify_access_token(token)
+        payload = verify_access_token(token.strip())
 
         if payload is None:
             raise AuthException.invalid_token()
@@ -125,7 +151,6 @@ class AuthService:
     def forgot_password(self, email: str):
         user = self.repository.get_by_email(email)
 
-        # Always return same response (security best practice)
         if user is None:
             return {
                 "message": "If the email exists, a password reset link has been sent."
@@ -135,7 +160,10 @@ class AuthService:
             {"sub": user.email}
         )
 
-        send_reset_password_email(user.email, reset_token)
+        send_reset_password_email(
+            user.email,
+            reset_token,
+        )
 
         return {
             "message": "If the email exists, a password reset link has been sent."
@@ -144,7 +172,11 @@ class AuthService:
     # -------------------------
     # RESET PASSWORD
     # -------------------------
-    def reset_password(self, token: str, new_password: str):
+    def reset_password(
+        self,
+        token: str,
+        new_password: str,
+    ):
         payload = verify_access_token(token)
 
         if payload is None:
@@ -164,31 +196,34 @@ class AuthService:
             raise AuthException.not_found()
 
         user.password_hash = hash_password(new_password)
+
         self.repository.update(user)
 
         return {
             "message": "Password reset successfully"
         }
 
-
-
+    # -------------------------
+    # LOGOUT
+    # -------------------------
     def logout(self, token: str):
         payload = verify_access_token(token)
 
         if payload is None:
-          raise ValueError("Invalid token")
+            raise AuthException.invalid_token()
 
         exp = payload.get("exp")
 
         if exp is None:
-          raise ValueError("Token has no expiration")
-
-        import time
+            raise AuthException.invalid_token()
 
         expires_in = exp - int(time.time())
 
         if expires_in > 0:
-          blacklist_token(token, expires_in)
+            blacklist_token(
+                token,
+                expires_in,
+            )
 
         return {
             "message": "Logged out successfully"

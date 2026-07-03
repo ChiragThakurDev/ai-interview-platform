@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 
 
 class AuthException:
+
     @staticmethod
     def invalid_credentials():
         return HTTPException(
@@ -35,4 +36,11 @@ class AuthException:
         return HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not allowed",
+        )
+
+    @staticmethod
+    def too_many_requests():
+        return HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed login attempts. Please try again after 15 minutes.",
         )
