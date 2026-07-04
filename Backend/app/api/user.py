@@ -17,6 +17,9 @@ router = APIRouter(
 )
 
 
+# -------------------------
+# REGISTER
+# -------------------------
 @router.post(
     "/register",
     response_model=UserResponse,
@@ -38,6 +41,9 @@ def register_user(
         )
 
 
+# -------------------------
+# CURRENT USER
+# -------------------------
 @router.get("/me")
 def get_me(
     current_user: User = Depends(get_current_user),
@@ -51,6 +57,9 @@ def get_me(
     }
 
 
+# -------------------------
+# ADMIN DASHBOARD
+# -------------------------
 @router.get("/admin")
 def admin_dashboard(
     current_admin: User = Depends(get_current_admin),
@@ -62,3 +71,54 @@ def admin_dashboard(
         "email": current_admin.email,
         "role": current_admin.role,
     }
+
+
+# -------------------------
+# GET ALL USERS (Admin)
+# -------------------------
+@router.get("/")
+def get_all_users(
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin),
+):
+    service = UserService(db)
+    return service.get_all_users()
+
+
+# -------------------------
+# ACTIVATE USER (Admin)
+# -------------------------
+@router.patch("/{user_id}/activate")
+def activate_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin),
+):
+    service = UserService(db)
+    return service.activate_user(user_id)
+
+
+# -------------------------
+# DEACTIVATE USER (Admin)
+# -------------------------
+@router.patch("/{user_id}/deactivate")
+def deactivate_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin),
+):
+    service = UserService(db)
+    return service.deactivate_user(user_id)
+
+
+# -------------------------
+# DELETE USER (Admin)
+# -------------------------
+@router.delete("/{user_id}")
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin),
+):
+    service = UserService(db)
+    return service.delete_user(user_id)

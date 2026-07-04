@@ -14,6 +14,7 @@ from app.core.exception_handler import (
 
 from app.db.session import engine
 
+from app.api.api_key import router as api_key_router
 
 # -------------------------
 # CREATE APP FIRST
@@ -34,7 +35,7 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 # -------------------------
 app.include_router(user_router)
 app.include_router(auth_router)
-
+app.include_router(api_key_router)
 
 # -------------------------
 # ROOT
