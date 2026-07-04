@@ -1,8 +1,11 @@
 import time
 
 from app.core.config import settings
-from app.utils.refresh_token_store import store_refresh_token
-
+from app.utils.refresh_token_store import (
+    store_refresh_token,
+    is_refresh_token_valid,
+    rotate_refresh_token,
+)
 from app.repositories.user_repository import UserRepository
 
 from app.utils.security import (
@@ -79,38 +82,58 @@ class AuthService:
             "token_type": "bearer",
         }
 
-    # -------------------------
-    # REFRESH TOKEN
-    # -------------------------
-    def refresh_access_token(self, refresh_token: str):
-        payload = verify_access_token(refresh_token)
+# -------------------------
+# REFRESH TOKEN
+# -------------------------
+def refresh_access_token(self, refresh_token: str):
+    # Verify JWT
+    payload = verify_access_token(refresh_token)
 
-        if payload is None:
-            raise AuthException.invalid_token()
+    if payload is None:
+        raise AuthException.invalid_token()
 
-        if payload.get("type") != "refresh":
-            raise AuthException.invalid_token()
+    if payload.get("type") != "refresh":
+        raise AuthException.invalid_token()
 
-        email = payload.get("sub")
+    # Check whether refresh token exists in Redis
+    if not is_refresh_token_valid(refresh_token):
+        raise AuthException.invalid_token()
 
-        if email is None:
-            raise AuthException.invalid_token()
+    email = payload.get("sub")
 
-        user = self.repository.get_by_email(email)
+    if email is None:
+        raise AuthException.invalid_token()
 
-        if user is None:
-            raise AuthException.not_found()
+    user = self.repository.get_by_email(email)
 
-        access_token = create_access_token(
-            {"sub": user.email}
-        )
+    if user is None:
+        raise AuthException.not_found()
 
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
+    # Generate new tokens
+    new_access_token = create_access_token(
+        {
+            "sub": user.email,
         }
+    )
 
+    new_refresh_token = create_refresh_token(
+        {
+            "sub": user.email,
+        }
+    )
+
+    # Rotate refresh token
+    rotate_refresh_token(
+        old_token=refresh_token,
+        new_token=new_refresh_token,
+        expires_in=settings.refresh_token_expire_days * 24 * 60 * 60,
+    )
+
+    return {
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer",
+    }
     # -------------------------
     # VERIFY EMAIL
     # -------------------------
