@@ -1,7 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import (
+    get_current_user,
+    get_current_admin,
+)
 
 from app.db.dependencies import get_db
 from app.schemas.user import UserCreate, UserResponse
@@ -45,4 +48,17 @@ def get_me(
         "email": current_user.email,
         "role": current_user.role,
         "is_active": current_user.is_active,
+    }
+
+
+@router.get("/admin")
+def admin_dashboard(
+    current_admin: User = Depends(get_current_admin),
+):
+    return {
+        "message": "Welcome Admin!",
+        "id": current_admin.id,
+        "name": current_admin.name,
+        "email": current_admin.email,
+        "role": current_admin.role,
     }
