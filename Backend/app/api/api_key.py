@@ -7,8 +7,7 @@ from sqlalchemy.orm import Session
 from app.db.dependencies import get_db
 
 from app.dependencies.auth import get_current_user
-
-
+from app.dependencies.api_key import get_api_key_user
 
 from app.models.user import User
 
@@ -175,3 +174,18 @@ def revoke_api_key(
                 detail=str(e),
 
                 )
+
+@router.get("/profile")
+def api_key_profile(
+        current_user:User=Depends(get_api_key_user),
+):
+    return {
+            "message":"Authenticated using API Key",
+            "id":current_user.id,
+            "name":current_user.name,
+            "email":current_user.email,
+            "role":current_user.role,
+            }
+
+
+
