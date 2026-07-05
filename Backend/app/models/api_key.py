@@ -36,6 +36,13 @@ class APIKey(Base):
         nullable=False,
     )
 
+    # NEW COLUMN
+    permissions: Mapped[str] = mapped_column(
+        String(255),
+        default="read",
+        nullable=False,
+    )
+
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
