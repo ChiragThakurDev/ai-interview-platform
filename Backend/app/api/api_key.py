@@ -5,12 +5,11 @@ from sqlalchemy.orm import Session
 from app.dependencies.permissions import require_permission
 
 from app.db.dependencies import get_db
-
+from app.dependencies.rate_limit import rate_limit
 from app.dependencies.auth import get_current_user
 from app.dependencies.api_key import get_api_key_user
 
 from app.models.user import User
-
 
 
 from app.schemas.api_key import (
@@ -207,3 +206,12 @@ def write_test(
             "permissions": api_key.permissions,
         }
 
+@router.get("/limited")
+def limited_endpoint(
+        api_key=Depends(require_permission("read")),
+        _=Depends(rate_limit(5,60)),
+):
+    return {
+            "message":"Request successful!",
+            "api_key":api_key.name,
+        }
