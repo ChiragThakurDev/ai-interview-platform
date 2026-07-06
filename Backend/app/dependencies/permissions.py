@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 
 from app.models.api_key import APIKey
 
-from app.dependencies.api_key_auth import get_api_key_user
+from app.dependencies.api_key import get_api_key_user
 
 def require_permission(permission: str):
     def dependency(
@@ -16,7 +16,7 @@ def require_permission(permission: str):
         if permission.lower() not in permissions:
             raise HTTPException (
                     status_code=status.HTTP_403_FORBIDDEN,
-                    details=f"'{permission}'permission required.",
+                    detail=f"'{permission}'permission required.",
                 )
 
         return api_key

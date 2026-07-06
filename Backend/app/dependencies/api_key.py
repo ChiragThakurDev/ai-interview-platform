@@ -65,4 +65,4 @@ def get_api_key_user(
             detail="User account is inactive",
         )
 
-    return user
+    return api_key_obj

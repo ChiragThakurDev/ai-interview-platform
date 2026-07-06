@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from sqlalchemy.orm import Session
 
-
+from app.dependencies.permissions import require_permission
 
 from app.db.dependencies import get_db
 
@@ -178,7 +178,7 @@ def revoke_api_key(
 @router.get("/profile")
 def api_key_profile(
         current_user:User=Depends(get_api_key_user),
-):
+        ):
     return {
             "message":"Authenticated using API Key",
             "id":current_user.id,
@@ -188,4 +188,22 @@ def api_key_profile(
             }
 
 
+@router.get("/protected")
+def protected_endpoint(
+        api_key=Depends(require_permission("read")),
+):
+    return {
+            "message": "You have READ permission.",
+            "permission": api_key.permissions,
+            }
+
+
+@router.get("/write-test")
+def write_test(
+        api_key=Depends(require_permission("write")),
+):
+    return {
+            "message":"You have WRITE permissions.",
+            "permissions": api_key.permissions,
+        }
 
