@@ -1,80 +1,42 @@
 import time
+import logging
 
-from app.core.config import settings
-from app.utils.refresh_token_store import (
-    store_refresh_token,
-    is_refresh_token_valid,
-    rotate_refresh_token,
-)
-from app.repositories.user_repository import UserRepository
-
-from app.utils.security import (
-    verify_password,
-    hash_password,
-)
-
-from app.utils.jwt import (
-    create_access_token,
-    create_refresh_token,
-    create_password_reset_token,
-    verify_access_token,
-)
-
-from app.utils.email import (
-    send_reset_password_email,
-)
-
-from app.core.exceptions import AuthException
-
-from app.utils.token_blacklist import blacklist_token
-
-from app.utils.rate_limiter import (
-    increment_login_attempts,
-    reset_login_attempts,
-    is_login_blocked,
-)
-
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
-
-    def __init__(self, db):
-        self.repository = UserRepository(db)
+    def __init__(self, repository):
+        self.repository = repository
 
     # -------------------------
     # LOGIN
     # -------------------------
     def login(self, email: str, password: str):
-
-        # Check rate limit
-        if is_login_blocked(email):
-            raise AuthException.too_many_requests()
-
         user = self.repository.get_by_email(email)
 
         if not user:
+            logger.warning(
+                f"Failed login attempt: user '{email}' not found."
+            )
             increment_login_attempts(email)
             raise AuthException.invalid_credentials()
 
         if not verify_password(password, user.password_hash):
+            logger.warning(
+                f"Failed login attempt: incorrect password for '{email}'."
+            )
             increment_login_attempts(email)
             raise AuthException.invalid_credentials()
 
-        # Successful login
-        reset_login_attempts(email)
-
-        access_token = create_access_token(
-            {"sub": user.email}
-        )
-        refresh_token=create_refresh_token(
-                {
-                    "sub":user.email}
-            )
+        access_token = create_access_token({"sub": user.email})
+        refresh_token = create_refresh_token({"sub": user.email})
 
         store_refresh_token(
-          token=refresh_token,
-          expires_in=settings.refresh_token_expire_days * 24 * 60 * 60,
+            token=refresh_token,
+            expires_in=settings.refresh_token_expire_days * 24 * 60 * 60,
         )
+
+        logger.info(f"User '{user.email}' logged in successfully.")
 
         return {
             "access_token": access_token,
@@ -82,58 +44,46 @@ class AuthService:
             "token_type": "bearer",
         }
 
-# -------------------------
-# REFRESH TOKEN
-# -------------------------
-def refresh_access_token(self, refresh_token: str):
-    # Verify JWT
-    payload = verify_access_token(refresh_token)
+    # -------------------------
+    # REFRESH TOKEN
+    # -------------------------
+    def refresh_access_token(self, refresh_token: str):
+        payload = verify_access_token(refresh_token)
 
-    if payload is None:
-        raise AuthException.invalid_token()
+        if payload is None:
+            raise AuthException.invalid_token()
 
-    if payload.get("type") != "refresh":
-        raise AuthException.invalid_token()
+        if payload.get("type") != "refresh":
+            raise AuthException.invalid_token()
 
-    # Check whether refresh token exists in Redis
-    if not is_refresh_token_valid(refresh_token):
-        raise AuthException.invalid_token()
+        if not is_refresh_token_valid(refresh_token):
+            raise AuthException.invalid_token()
 
-    email = payload.get("sub")
+        email = payload.get("sub")
 
-    if email is None:
-        raise AuthException.invalid_token()
+        if email is None:
+            raise AuthException.invalid_token()
 
-    user = self.repository.get_by_email(email)
+        user = self.repository.get_by_email(email)
 
-    if user is None:
-        raise AuthException.not_found()
+        if user is None:
+            raise AuthException.not_found()
 
-    # Generate new tokens
-    new_access_token = create_access_token(
-        {
-            "sub": user.email,
+        new_access_token = create_access_token({"sub": user.email})
+        new_refresh_token = create_refresh_token({"sub": user.email})
+
+        rotate_refresh_token(
+            old_token=refresh_token,
+            new_token=new_refresh_token,
+            expires_in=settings.refresh_token_expire_days * 24 * 60 * 60,
+        )
+
+        return {
+            "access_token": new_access_token,
+            "refresh_token": new_refresh_token,
+            "token_type": "bearer",
         }
-    )
 
-    new_refresh_token = create_refresh_token(
-        {
-            "sub": user.email,
-        }
-    )
-
-    # Rotate refresh token
-    rotate_refresh_token(
-        old_token=refresh_token,
-        new_token=new_refresh_token,
-        expires_in=settings.refresh_token_expire_days * 24 * 60 * 60,
-    )
-
-    return {
-        "access_token": new_access_token,
-        "refresh_token": new_refresh_token,
-        "token_type": "bearer",
-    }
     # -------------------------
     # VERIFY EMAIL
     # -------------------------
@@ -157,16 +107,12 @@ def refresh_access_token(self, refresh_token: str):
             raise AuthException.not_found()
 
         if user.is_verified:
-            return {
-                "message": "Email already verified"
-            }
+            return {"message": "Email already verified"}
 
         user.is_verified = True
         self.repository.update(user)
 
-        return {
-            "message": "Email verified successfully"
-        }
+        return {"message": "Email verified successfully"}
 
     # -------------------------
     # FORGOT PASSWORD
@@ -179,14 +125,9 @@ def refresh_access_token(self, refresh_token: str):
                 "message": "If the email exists, a password reset link has been sent."
             }
 
-        reset_token = create_password_reset_token(
-            {"sub": user.email}
-        )
+        reset_token = create_password_reset_token({"sub": user.email})
 
-        send_reset_password_email(
-            user.email,
-            reset_token,
-        )
+        send_reset_password_email(user.email, reset_token)
 
         return {
             "message": "If the email exists, a password reset link has been sent."
@@ -195,11 +136,7 @@ def refresh_access_token(self, refresh_token: str):
     # -------------------------
     # RESET PASSWORD
     # -------------------------
-    def reset_password(
-        self,
-        token: str,
-        new_password: str,
-    ):
+    def reset_password(self, token: str, new_password: str):
         payload = verify_access_token(token)
 
         if payload is None:
@@ -219,12 +156,9 @@ def refresh_access_token(self, refresh_token: str):
             raise AuthException.not_found()
 
         user.password_hash = hash_password(new_password)
-
         self.repository.update(user)
 
-        return {
-            "message": "Password reset successfully"
-        }
+        return {"message": "Password reset successfully"}
 
     # -------------------------
     # LOGOUT
@@ -243,11 +177,6 @@ def refresh_access_token(self, refresh_token: str):
         expires_in = exp - int(time.time())
 
         if expires_in > 0:
-            blacklist_token(
-                token,
-                expires_in,
-            )
+            blacklist_token(token, expires_in)
 
-        return {
-            "message": "Logged out successfully"
-        }
+        return {"message": "Logged out successfully"}

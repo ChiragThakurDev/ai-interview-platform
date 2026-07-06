@@ -16,6 +16,10 @@ from app.db.session import engine
 
 from app.api.api_key import router as api_key_router
 
+from app.core.logger import logger
+
+logger.info("Starting AI Interview Platform...")
+
 # -------------------------
 # CREATE APP FIRST
 # -------------------------
