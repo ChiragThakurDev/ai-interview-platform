@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # -------------------------
@@ -7,6 +7,10 @@ from pydantic import BaseModel
 # -------------------------
 class APIKeyCreate(BaseModel):
     name: str
+    permissions: str = Field(
+        default="read",
+        description="Comma-separated permissions (e.g. read,write)",
+    )
 
 
 # -------------------------
@@ -16,6 +20,7 @@ class APIKeyResponse(BaseModel):
     id: int
     name: str
     api_key: str
+    permissions: str
     is_active: bool
     expires_at: datetime | None
     created_at: datetime
@@ -31,6 +36,7 @@ class APIKeyResponse(BaseModel):
 class APIKeyListResponse(BaseModel):
     id: int
     name: str
+    permissions: str
     is_active: bool
     expires_at: datetime | None
     created_at: datetime

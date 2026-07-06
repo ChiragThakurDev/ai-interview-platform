@@ -36,6 +36,7 @@ class APIKeyService:
         api_key = APIKey(
             key_hash=hashed_key,
             name=request.name,
+            permissions=request.permissions,   # NEW
             user_id=current_user.id,
             is_active=True,
         )
@@ -47,6 +48,7 @@ class APIKeyService:
             "id": api_key.id,
             "name": api_key.name,
             "api_key": plain_api_key,
+            "permissions": api_key.permissions,   # NEW
             "is_active": api_key.is_active,
             "expires_at": api_key.expires_at,
             "created_at": api_key.created_at,
