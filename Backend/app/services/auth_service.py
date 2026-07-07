@@ -1,12 +1,43 @@
 import time
-import logging
 
-logger = logging.getLogger(__name__)
+from app.core.config import settings
+from app.repositories.user_repository import UserRepository
+
+from app.utils.security import (
+        verify_password,
+        hash_password,
+        )
+
+from app.utils.jwt import (
+        create_access_token,
+        create_refresh_token,
+        create_password_reset_token,
+        verify_access_token,
+        )
+
+from app.utils.refresh_token_store import (
+        store_refresh_token,
+        is_refresh_token_valid,
+        rotate_refresh_token,
+        )
+
+from app.utils.rate_limiter import (
+        increment_login_attempts,
+        reset_login_attempts,
+        is_login_blocked,
+        )
+
+from app.utils.token_blacklist import blacklist_token
+
+from app.utils.email import send_reset_password_email
+
+from app.core.exceptions import AuthException
+from app.core.logger import logger
 
 
 class AuthService:
-    def __init__(self, repository):
-        self.repository = repository
+    def __init__(self, db):
+        self.repository = UserRepository(db)
 
     # -------------------------
     # LOGIN
@@ -16,15 +47,15 @@ class AuthService:
 
         if not user:
             logger.warning(
-                f"Failed login attempt: user '{email}' not found."
-            )
+                    f"Failed login attempt: user '{email}' not found."
+                    )
             increment_login_attempts(email)
             raise AuthException.invalid_credentials()
 
         if not verify_password(password, user.password_hash):
             logger.warning(
-                f"Failed login attempt: incorrect password for '{email}'."
-            )
+                    f"Failed login attempt: incorrect password for '{email}'."
+                    )
             increment_login_attempts(email)
             raise AuthException.invalid_credentials()
 
@@ -32,17 +63,17 @@ class AuthService:
         refresh_token = create_refresh_token({"sub": user.email})
 
         store_refresh_token(
-            token=refresh_token,
-            expires_in=settings.refresh_token_expire_days * 24 * 60 * 60,
-        )
+                token=refresh_token,
+                expires_in=settings.refresh_token_expire_days * 24 * 60 * 60,
+                )
 
         logger.info(f"User '{user.email}' logged in successfully.")
 
         return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
-        }
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "token_type": "bearer",
+                }
 
     # -------------------------
     # REFRESH TOKEN
@@ -51,38 +82,43 @@ class AuthService:
         payload = verify_access_token(refresh_token)
 
         if payload is None:
+            logger.warning("Invalid refresh token.")
             raise AuthException.invalid_token()
 
         if payload.get("type") != "refresh":
+            logger.warning("Invalid refresh token type.")
             raise AuthException.invalid_token()
 
         if not is_refresh_token_valid(refresh_token):
+            logger.warning("Refresh token not found or expired.")
             raise AuthException.invalid_token()
 
         email = payload.get("sub")
 
         if email is None:
+            logger.warning("Refresh token missing email.")
             raise AuthException.invalid_token()
 
         user = self.repository.get_by_email(email)
 
         if user is None:
+            logger.warning(f"Refresh token user not found: {email}")
             raise AuthException.not_found()
 
         new_access_token = create_access_token({"sub": user.email})
         new_refresh_token = create_refresh_token({"sub": user.email})
 
         rotate_refresh_token(
-            old_token=refresh_token,
-            new_token=new_refresh_token,
-            expires_in=settings.refresh_token_expire_days * 24 * 60 * 60,
-        )
-
+                old_token=refresh_token,
+                new_token=new_refresh_token,
+                expires_in=settings.refresh_token_expire_days * 24 * 60 * 60,
+                )
+        logger.info(f"Access token refreshed for'{user.email}'.")
         return {
-            "access_token": new_access_token,
-            "refresh_token": new_refresh_token,
-            "token_type": "bearer",
-        }
+                "access_token": new_access_token,
+                "refresh_token": new_refresh_token,
+                "token_type": "bearer",
+                }
 
     # -------------------------
     # VERIFY EMAIL
@@ -112,6 +148,7 @@ class AuthService:
         user.is_verified = True
         self.repository.update(user)
 
+        logger.info(f"Email verified for '{user.email}'.")
         return {"message": "Email verified successfully"}
 
     # -------------------------
@@ -121,17 +158,19 @@ class AuthService:
         user = self.repository.get_by_email(email)
 
         if user is None:
+            logger.warning(f"Password reset requested for unknown email '{email}'.")
             return {
-                "message": "If the email exists, a password reset link has been sent."
-            }
+                    "message": "If the email exists, a password reset link has been sent."
+                    }
 
         reset_token = create_password_reset_token({"sub": user.email})
 
         send_reset_password_email(user.email, reset_token)
 
+        logger.info(f"Password reset email sent to '{user.email}'.")
         return {
-            "message": "If the email exists, a password reset link has been sent."
-        }
+                "message": "If the email exists, a password reset link has been sent."
+                }
 
     # -------------------------
     # RESET PASSWORD
@@ -158,6 +197,8 @@ class AuthService:
         user.password_hash = hash_password(new_password)
         self.repository.update(user)
 
+        logger.info(f"Password reset successfully for '{user.email}'.")
+
         return {"message": "Password reset successfully"}
 
     # -------------------------
@@ -178,5 +219,10 @@ class AuthService:
 
         if expires_in > 0:
             blacklist_token(token, expires_in)
+
+
+        email = payload.get("sub")
+
+        logger.info(f"User '{email}' logged out successfully.")
 
         return {"message": "Logged out successfully"}

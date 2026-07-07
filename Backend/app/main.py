@@ -12,11 +12,13 @@ from app.core.exception_handler import (
     validation_exception_handler,
 )
 
+
+from app.middleware.logging_middleware import LoggingMiddleware
+
 from app.db.session import engine
-
 from app.api.api_key import router as api_key_router
-
 from app.core.logger import logger
+
 
 logger.info("Starting AI Interview Platform...")
 
@@ -28,6 +30,7 @@ app = FastAPI(
     version=settings.app_version,
 )
 
+app.add_middleware(LoggingMiddleware)
 # -------------------------
 # EXCEPTION HANDLERS
 # -------------------------
