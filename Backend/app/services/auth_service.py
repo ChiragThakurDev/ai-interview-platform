@@ -154,7 +154,7 @@ class AuthService:
     # -------------------------
     # FORGOT PASSWORD
     # -------------------------
-    def forgot_password(self, email: str):
+    def forgot_password(self, email: str,background_tasks):
         user = self.repository.get_by_email(email)
 
         if user is None:
@@ -165,7 +165,7 @@ class AuthService:
 
         reset_token = create_password_reset_token({"sub": user.email})
 
-        send_reset_password_email(user.email, reset_token)
+        background_tasks.add_task(send_reset_password_email, user.email, reset_token)
 
         logger.info(f"Password reset email sent to '{user.email}'.")
         return {
