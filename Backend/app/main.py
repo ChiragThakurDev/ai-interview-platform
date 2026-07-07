@@ -10,6 +10,7 @@ from app.core.config import settings
 from app.core.exception_handler import (
     http_exception_handler,
     validation_exception_handler,
+    global_exception_handler,
 )
 
 
@@ -36,6 +37,7 @@ app.add_middleware(LoggingMiddleware)
 # -------------------------
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, global_exception_handler,)
 
 # -------------------------
 # ROUTES
@@ -71,4 +73,5 @@ def health_check():
         return {
             "status": "Database Connection Failed",
             "error": str(e)
-        }
+
+            }        
