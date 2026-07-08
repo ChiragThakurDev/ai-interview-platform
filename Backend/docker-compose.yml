@@ -1,7 +1,9 @@
 services:
 
   backend:
-    image: ai-interview-backend
+    build:
+     context: .
+
     container_name: ai-interview-api
 
     env_file:

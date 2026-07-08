@@ -5,7 +5,7 @@ from starlette.exceptions import HTTPException
 
 from app.api.user import router as user_router
 from app.api.auth import router as auth_router
-
+from app.api.health import router as health_router
 from app.core.config import settings
 from app.core.exception_handler import (
     http_exception_handler,
@@ -45,7 +45,7 @@ app.add_exception_handler(Exception, global_exception_handler,)
 app.include_router(user_router)
 app.include_router(auth_router)
 app.include_router(api_key_router)
-
+app.include_router(health_router)
 # -------------------------
 # ROOT
 # -------------------------
