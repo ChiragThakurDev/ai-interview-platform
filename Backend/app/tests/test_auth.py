@@ -1,10 +1,14 @@
+from app.db.session import SessionLocal
+from app.models.user import User
+from app.utils.security import hash_password
+
+
 def test_login_without_credentials(client):
     response = client.post("/auth/login")
-    
+
     assert response.status_code == 422
 
-
-def test_login_success(client):
+def test_login_success(client, test_user):
     response = client.post(
         "/auth/login",
         data={

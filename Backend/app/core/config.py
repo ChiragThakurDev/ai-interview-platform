@@ -1,4 +1,9 @@
+import os
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+ENV_FILE = os.getenv("ENV_FILE", ".env")
 
 
 class Settings(BaseSettings):
@@ -23,14 +28,14 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str
 
-    # Email (NEW)
+    # Email
     smtp_host: str
     smtp_port: int
     smtp_email: str
     smtp_password: str
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_FILE,
         case_sensitive=False,
     )
 
