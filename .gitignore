@@ -1,41 +1,69 @@
-#Python 
+# ==========================
+# Python
+# ==========================
 Backend/venv/
 Backend/__pycache__/
 Backend/.pytest_cache/
 Backend/.mypy_cache/
 Backend/.env
 
-#Node
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# ==========================
+# Environment Variables
+# ==========================
+.env
+.env.*
+!.env.example
+
+# ==========================
+# Logs
+# ==========================
+logs/
+*.log
+
+# ==========================
+# Database
+# ==========================
+*.db
+*.sqlite3
+
+# ==========================
+# Test Coverage
+# ==========================
+.coverage
+htmlcov/
+coverage.xml
+
+# ==========================
+# Node.js / Next.js
+# ==========================
 frontend/node_modules/
 frontend/.next/
 frontend/out/
 
-#IDE
+# ==========================
+# IDE
+# ==========================
 .vscode/
 .idea/
 
-#OS
+# ==========================
+# OS Files
+# ==========================
 .DS_Store
 Thumbs.db
 
-#Logs
-*.log
-
-#Environment
-.env
-
-#Database
-*.db
-
-#Coverage
-.coverage
-htmlcov/
-
-#Python bytecode
-*.pyc
-*.pyo
-
-#Misc
+# ==========================
+# Misc
+# ==========================
 *.swp
+*.swo
 
-
+# ==========================
+# Docker
+# ==========================
+*.pid
