@@ -7,6 +7,9 @@ def create_test_user(
     name="Chirag",
     email="chiragthakur2103@gmail.com",
     password="123@chirag",
+    role="user",
+    is_active=True,
+    is_verified=False,
 ):
     user = db.query(User).filter(
         User.email == email
@@ -19,9 +22,9 @@ def create_test_user(
         name=name,
         email=email,
         password_hash=hash_password(password),
-        role="user",
-        is_active=True,
-        is_verified=True,
+        role=role,
+        is_active=is_active,
+        is_verified=is_verified,
     )
 
     db.add(user)
