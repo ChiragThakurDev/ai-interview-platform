@@ -51,13 +51,18 @@ def client(db):
 def test_user(db):
     return create_test_user(db)
 
+
 @pytest.fixture
 def admin_user(db):
-    return create_test_user(
+    user = create_test_user(
         db,
         name="Admin",
         email="admin@example.com",
-        password="admin123",
-        role="admin",
-        is_verified=True,
+        password="123@chirag",
     )
+
+    user.role = "admin"
+    db.commit()
+    db.refresh(user)
+
+    return user
