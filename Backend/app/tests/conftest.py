@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
 
 from app.main import app
+from app.db.dependencies import get_db
 from app.db.session import engine
 from app.tests.factories import create_test_user
 
@@ -18,26 +19,32 @@ TestingSessionLocal = sessionmaker(
 )
 
 
-@pytest.fixture(scope="session")
-def client():
-    with TestClient(app) as client:
-        yield client
-
-
 @pytest.fixture
 def db():
     connection = engine.connect()
-
     transaction = connection.begin()
 
-    db = TestingSessionLocal(bind=connection)
+    session = TestingSessionLocal(bind=connection)
 
     try:
-        yield db
+        yield session
     finally:
-        db.close()
+        session.close()
         transaction.rollback()
         connection.close()
+
+
+@pytest.fixture
+def client(db):
+    def override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    with TestClient(app) as client:
+        yield client
+
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
