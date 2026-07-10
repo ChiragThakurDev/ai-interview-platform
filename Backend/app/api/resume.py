@@ -1,5 +1,8 @@
 import os
 import shutil
+from fastapi import HTTPException
+
+from fastapi.responses import FileResponse
 
 from fastapi import (
     APIRouter,
@@ -66,10 +69,7 @@ def upload_resume(
 
 
 
-@router.get(
-    "/my",
-    response_model=list[ResumeResponse]
-)
+@router.get("/my", response_model=list[ResumeResponse])
 def my_resumes(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -79,4 +79,59 @@ def my_resumes(
 
     return service.get_user_resumes(
         current_user.id
+    )
+
+
+
+@router.delete("/{resume_id}")
+def delete_resume(
+    resume_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    service = ResumeService(db)
+
+    try:
+        return service.delete_resume(
+            resume_id,
+            current_user.id
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
+@router.get("/{resume_id}/download")
+def download_resume(
+    resume_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    service = ResumeService(db)
+
+    resume = service.get_resume_by_id(
+        resume_id,
+        current_user.id
+    )
+
+    if not resume:
+        raise HTTPException(
+            status_code=404,
+            detail="Resume not found"
+        )
+
+    if not os.path.exists(resume.file_path):
+        raise HTTPException(
+            status_code=404,
+            detail="File not found"
+        )
+
+    return FileResponse(
+        path=resume.file_path,
+        filename=resume.filename,
+        media_type=resume.content_type
     )
