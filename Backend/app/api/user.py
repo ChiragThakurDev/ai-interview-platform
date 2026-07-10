@@ -1,4 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    BackgroundTasks,
+)
+from app.tasks.email_tasks import send_welcome_email
 from sqlalchemy.orm import Session
 
 from app.dependencies.auth import (
@@ -27,12 +34,19 @@ router = APIRouter(
 )
 def register_user(
     user: UserCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     service = UserService(db)
 
     try:
-        return service.create_user(user)
+        created_user=service.create_user(user)
+
+        background_tasks.add_task(
+                send_welcome_email,
+                create_user.email,
+            )
+        return created_user
 
     except ValueError as e:
         raise HTTPException(
