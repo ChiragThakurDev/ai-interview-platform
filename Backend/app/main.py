@@ -20,6 +20,7 @@ from app.db.session import engine
 from app.api.api_key import router as api_key_router
 from app.core.logger import logger
 
+from app.api.resume import router as resume_router
 
 logger.info("Starting AI Interview Platform...")
 
@@ -46,6 +47,7 @@ app.include_router(user_router)
 app.include_router(auth_router)
 app.include_router(api_key_router)
 app.include_router(health_router)
+app.include_router(resume_router)
 # -------------------------
 # ROOT
 # -------------------------

@@ -44,7 +44,7 @@ def register_user(
 
         background_tasks.add_task(
                 send_welcome_email,
-                create_user.email,
+                created_user.email,
             )
         return created_user
 
