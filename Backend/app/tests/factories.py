@@ -32,3 +32,13 @@ def create_test_user(
     db.refresh(user)
 
     return user
+
+def create_second_user(
+    db,
+):
+    return create_test_user(
+        db,
+        name="Second User",
+        email="second@example.com",
+        password="123@chirag",
+    )

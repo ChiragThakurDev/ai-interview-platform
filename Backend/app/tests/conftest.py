@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.db.dependencies import get_db
 from app.db.session import engine
-from app.tests.factories import create_test_user
+from app.tests.factories import (create_test_user, create_second_user,)
 
 
 TestingSessionLocal = sessionmaker(
@@ -66,3 +66,7 @@ def admin_user(db):
     db.refresh(user)
 
     return user
+
+@pytest.fixture
+def second_user(db):
+    return create_second_user(db)
