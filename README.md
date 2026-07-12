@@ -1,62 +1,259 @@
-# AI Interview Preparation Platform
+# 🤖 AI Interview Preparation Platform
 
-A production-grade AI Interview Preparation Platform built with **FastAPI**, **Next.js**, **PostgreSQL**, and **Docker**.
-
-## Tech Stack
-
-### Backend
-- FastAPI
-- SQLAlchemy
-- PostgreSQL
-- Alembic
-
-### Frontend
-- Next.js
-- TypeScript
-- Tailwind CSS
-
-### DevOps
-- Docker
-- Git & GitHub
+An AI-powered Interview Preparation Platform built with **FastAPI**, **PostgreSQL**, **Docker**, **Redis**, and **Ollama**. The platform enables users to upload resumes, receive AI-powered resume analysis, generate personalized interview questions, and prepares the foundation for AI-based interview evaluation.
 
 ---
 
-## Project Structure
+## 🚀 Features
+
+### 👤 Authentication & Authorization
+
+* JWT Authentication
+* Role-Based Authorization
+* Secure Password Hashing (bcrypt)
+* Protected API Endpoints
+
+### 📄 Resume Management
+
+* Upload PDF resumes
+* Store resume metadata
+* Extract text from PDF files
+* Resume management APIs
+
+### 🧠 AI Resume Analysis
+
+* AI-powered resume analysis using Ollama
+* Resume summary
+* Strengths & weaknesses
+* Improvement suggestions
+* Recommended job roles
+* Resume scoring
+
+### 💼 AI Interview Generation
+
+* Generate interview questions based on resume content
+* Role-specific interview generation
+* Difficulty levels (Easy / Medium / Hard)
+* Configurable number of questions
+* Store interviews in PostgreSQL
+* Store interview questions for future practice
+
+### 🐳 Infrastructure
+
+* Docker & Docker Compose
+* PostgreSQL
+* Redis
+* Ollama Integration
+* Logging Middleware
+* Alembic Database Migrations
+
+---
+
+# 🛠 Tech Stack
+
+### Backend
+
+* FastAPI
+* Python 3.12+
+* SQLAlchemy
+* Alembic
+* Pydantic
+
+### Database
+
+* PostgreSQL
+
+### AI
+
+* Ollama
+* Local LLM
+
+### Cache
+
+* Redis
+
+### DevOps
+
+* Docker
+* Docker Compose
+
+---
+
+# 📁 Project Structure
 
 ```text
-ai-interview-platform/
+app/
+├── ai/
+├── api/
+├── core/
+├── db/
+├── dependencies/
+├── middleware/
+├── models/
+├── repositories/
+├── schemas/
+├── services/
+├── utils/
+├── main.py
 │
-├── backend/
-├── frontend/
-├── README.md
-└── .gitignore
+alembic/
+docker-compose.yml
+Dockerfile
+requirements.txt
+README.md
 ```
 
 ---
 
-## Getting Started
+# ⚙️ Setup
 
-### Clone the Repository
+## Clone Repository
 
 ```bash
-git clone <repository-url>
+git clone <your-repository-url>
 cd ai-interview-platform
 ```
 
-### Backend Setup
+## Create Environment File
 
-```bash
-cd backend
+```env
+DATABASE_URL=postgresql://ai_user:password123@postgres:5432/ai_interview_platform
 
-python3 -m venv venv
+SECRET_KEY=your-secret-key
 
-source venv/bin/activate
+ALGORITHM=HS256
 
-pip install -r requirements.txt
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+REDIS_URL=redis://redis:6379
+
+OLLAMA_BASE_URL=http://host.docker.internal:11434
 ```
 
 ---
 
-## Author
+## Start Services
+
+```bash
+docker compose up --build
+```
+
+---
+
+## Run Database Migrations
+
+```bash
+docker compose exec backend alembic upgrade head
+```
+
+---
+
+# 📚 API Modules
+
+## Authentication
+
+* Register User
+* Login
+* Protected Routes
+* JWT Authentication
+
+## Resume
+
+* Upload Resume
+* Get Resume
+* Resume Analysis
+
+## Interview
+
+* Generate Interview Questions
+* Store Interview
+* Store Questions
+
+---
+
+# 🤖 AI Workflow
+
+```text
+User Uploads Resume
+        │
+        ▼
+Extract PDF Text
+        │
+        ▼
+Ollama AI
+        │
+        ├───────────────┐
+        ▼               ▼
+Resume Analysis   Interview Questions
+        │               │
+        ▼               ▼
+ Store in Database
+        │
+        ▼
+ Return API Response
+```
+
+---
+
+# 📦 Database Tables
+
+* users
+* api_keys
+* resumes
+* resume_analysis
+* interviews
+* interview_questions
+
+---
+
+# 🔜 Upcoming Features
+
+* AI Interview Answer Evaluation
+* Voice-Based Interview
+* Speech-to-Text
+* AI Feedback & Scoring
+* Interview History
+* Performance Dashboard
+* Interview Reports
+* Authentication Refresh Tokens
+* Admin Dashboard
+
+---
+
+# 📖 API Documentation
+
+After starting the project:
+
+Swagger UI:
+
+```
+http://localhost:5000/docs
+```
+
+OpenAPI JSON:
+
+```
+http://localhost:5000/openapi.json
+```
+
+---
+
+# 👨‍💻 Author
 
 **Chirag Thakur**
+
+MCA (Artificial Intelligence & Machine Learning)
+
+Full Stack Developer
+
+## Connect with me
+
+* GitHub: https://github.com/ChiragThakurDev
+* LinkedIn: https://www.linkedin.com/in/chirag-thakur-404b00229/
+
+---
+
+# ⭐ Support
+
+If you find this project useful, consider giving it a ⭐ on GitHub.
+
