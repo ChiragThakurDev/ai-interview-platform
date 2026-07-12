@@ -33,3 +33,8 @@ class Resume(Base):
         "User",
         back_populates="resumes",
     )
+
+    interviews = relationship(
+    "Interview",
+    back_populates="resume",
+    )

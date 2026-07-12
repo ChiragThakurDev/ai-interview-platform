@@ -12,3 +12,10 @@ class ResumeAnalysisResponse(BaseModel):
     recommended_roles: list[str]
 
     summary: str
+
+class AIInterviewQuestion(BaseModel):
+    question: str
+
+
+class AIInterviewResponse(BaseModel):
+    questions: list[AIInterviewQuestion]

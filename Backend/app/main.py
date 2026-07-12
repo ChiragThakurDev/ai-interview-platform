@@ -24,6 +24,10 @@ from app.api.resume import router as resume_router
 
 from app.api.ai import router as ai_router
 
+
+from app.api.interview import router as interview_router
+
+
 logger.info("Starting AI Interview Platform...")
 
 # -------------------------
@@ -51,6 +55,7 @@ app.include_router(api_key_router)
 app.include_router(health_router)
 app.include_router(resume_router)
 app.include_router(ai_router)
+app.include_router(interview_router)
 # -------------------------
 # ROOT
 # -------------------------

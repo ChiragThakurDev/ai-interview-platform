@@ -24,3 +24,39 @@ Resume:
 
 {resume}
 """
+
+INTERVIEW_GENERATION_PROMPT = """
+You are a Senior Technical Interviewer.
+
+Based on the resume below, generate {number_of_questions}
+technical interview questions.
+
+Candidate Resume:
+{resume}
+
+Target Role:
+{role}
+
+Difficulty:
+{difficulty}
+
+Rules:
+- Return ONLY valid JSON.
+- Do not include markdown.
+- Do not explain anything.
+- Questions should be concise.
+- Questions should assess practical knowledge.
+
+Return this JSON format:
+
+{{
+  "questions": [
+    {{
+      "question": "Question 1"
+    }},
+    {{
+      "question": "Question 2"
+    }}
+  ]
+}}
+"""
