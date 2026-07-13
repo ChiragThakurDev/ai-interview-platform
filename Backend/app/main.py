@@ -12,7 +12,7 @@ from app.core.exception_handler import (
     validation_exception_handler,
     global_exception_handler,
 )
-
+from app.api.dashboard import router as dashboard_router
 
 from app.middleware.logging_middleware import LoggingMiddleware
 
@@ -58,6 +58,10 @@ app.include_router(resume_router)
 app.include_router(ai_router)
 app.include_router(interview_router)
 app.include_router(interview_answer_router)
+
+app.include_router(
+    dashboard_router
+)
 # -------------------------
 # ROOT
 # -------------------------
