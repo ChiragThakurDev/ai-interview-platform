@@ -1,6 +1,7 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.interview import Interview
+from app.models.interview_question import InterviewQuestion
 
 
 class InterviewRepository:
@@ -26,6 +27,21 @@ class InterviewRepository:
             self.db.query(Interview)
             .filter(Interview.user_id == user_id)
             .all()
+        )
+
+    def get_with_results(
+        self,
+        interview_id: int,
+    ):
+        return (
+            self.db.query(Interview)
+            .options(
+                joinedload(Interview.questions).joinedload(
+                    InterviewQuestion.answer
+                )
+            )
+            .filter(Interview.id == interview_id)
+            .first()
         )
 
     def delete(self, interview: Interview):

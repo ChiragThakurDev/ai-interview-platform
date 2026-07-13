@@ -8,7 +8,18 @@ from app.dependencies.auth import get_current_user
 
 from app.models.user import User
 
-from app.schemas.interview import (GenerateInterviewRequest,GenerateInterviewResponse, InterviewListResponse,)
+from app.schemas.interview import (
+    GenerateInterviewRequest,
+    GenerateInterviewResponse,
+    InterviewListResponse,
+)
+
+from app.schemas.interview_result import (
+    InterviewResultResponse,
+)
+from app.schemas.interview_report import (
+    InterviewReportResponse,
+)
 
 from app.services.resume_service import ResumeService
 from app.services.interview_service import InterviewService
@@ -103,3 +114,122 @@ def get_my_interviews(
     )
 
     return interviews
+
+@router.get(
+    "/{interview_id}/results",
+    response_model=InterviewResultResponse,
+)
+def get_interview_results(
+    interview_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    interview_service = InterviewService(db)
+
+    interview = interview_service.get_interview(
+        interview_id
+    )
+
+    if not interview:
+        raise HTTPException(
+            status_code=404,
+            detail="Interview not found",
+        )
+
+    # Security check
+    if interview.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to view this interview",
+        )
+
+    results = interview_service.get_interview_results(
+        interview_id
+    )
+
+    return results
+
+@router.get(
+    "/{interview_id}/report",
+    response_model=InterviewReportResponse,
+)
+def get_interview_report(
+    interview_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    interview_service = InterviewService(db)
+
+    interview = interview_service.get_interview(
+        interview_id
+    )
+
+    if not interview:
+        raise HTTPException(
+            status_code=404,
+            detail="Interview not found",
+        )
+
+    # Security check
+    if interview.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized",
+        )
+
+
+    results = interview_service.get_interview_results(
+        interview_id
+    )
+
+
+    if not results:
+        raise HTTPException(
+            status_code=404,
+            detail="No interview results found",
+        )
+
+
+    formatted_results = ""
+
+
+    for item in results.questions:
+
+        if not item.answer:
+            continue
+
+        formatted_results += f"""
+Question:
+{item.question}
+
+
+Answer:
+{item.answer}
+
+
+Score:
+{item.score}
+
+
+Feedback:
+{item.feedback}
+
+-------------------------
+"""
+    if not formatted_results:
+        raise HTTPException(
+                status_code=404,
+                detail="No answered questions found",
+                )
+
+    ai_service = AIService()
+
+
+    report = ai_service.generate_interview_report(
+        formatted_results
+    )
+
+
+    return report
+

@@ -2,7 +2,6 @@ from sqlalchemy import (
     Column,
     Integer,
     ForeignKey,
-    String,
     Text,
     DateTime,
 )
@@ -12,8 +11,8 @@ from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 
-class InterviewQuestion(Base):
-    __tablename__ = "interview_questions"
+class InterviewAnswer(Base):
+    __tablename__ = "interview_answers"
 
     id = Column(
         Integer,
@@ -21,24 +20,28 @@ class InterviewQuestion(Base):
         index=True,
     )
 
-    interview_id = Column(
+    question_id = Column(
         Integer,
-        ForeignKey("interviews.id", ondelete="CASCADE"),
+        ForeignKey(
+            "interview_questions.id",
+            ondelete="CASCADE",
+        ),
         nullable=False,
+        unique=True,
     )
 
-    question = Column(
+    answer = Column(
         Text,
         nullable=False,
     )
 
-    category = Column(
-        String,
+    score = Column(
+        Integer,
         nullable=False,
     )
 
-    difficulty = Column(
-        String,
+    feedback = Column(
+        Text,
         nullable=False,
     )
 
@@ -47,16 +50,7 @@ class InterviewQuestion(Base):
         server_default=func.now(),
     )
 
-    interview = relationship(
-        "Interview",
-        back_populates="questions",
+    question = relationship(
+        "InterviewQuestion",
+        back_populates="answer",
     )
-
-    answer=relationship(
-            "InterviewAnswer",
-            back_populates="question",
-            uselist=False,
-            cascade="all, delete-orphan",
-
-            )
-
