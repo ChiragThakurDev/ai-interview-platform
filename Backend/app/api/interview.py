@@ -17,6 +17,7 @@ from app.schemas.interview import (
 from app.schemas.interview_result import (
     InterviewResultResponse,
 )
+
 from app.schemas.interview_report import (
     InterviewReportResponse,
 )
@@ -26,6 +27,11 @@ from app.services.interview_service import InterviewService
 from app.services.interview_question_service import (
     InterviewQuestionService,
 )
+
+from app.services.interview_report_service import (
+    InterviewReportService,
+)
+
 from app.services.ai_service import AIService
 
 from app.utils.pdf import extract_text_from_pdf
@@ -37,7 +43,10 @@ router = APIRouter(
 )
 
 
-@router.post("/generate/{resume_id}",response_model=GenerateInterviewResponse,)
+@router.post(
+    "/generate/{resume_id}",
+    response_model=GenerateInterviewResponse,
+)
 def generate_interview(
     resume_id: int,
     request: GenerateInterviewRequest,
@@ -58,17 +67,21 @@ def generate_interview(
             detail="Resume not found",
         )
 
+
     if not os.path.exists(resume.file_path):
         raise HTTPException(
             status_code=404,
             detail="Resume file not found",
         )
 
+
     resume_text = extract_text_from_pdf(
         resume.file_path
     )
 
+
     ai_service = AIService()
+
 
     ai_response = ai_service.generate_interview_questions(
         resume_text=resume_text,
@@ -77,7 +90,9 @@ def generate_interview(
         number_of_questions=request.number_of_questions,
     )
 
+
     interview_service = InterviewService(db)
+
 
     interview = interview_service.create_interview(
         user_id=current_user.id,
@@ -86,18 +101,26 @@ def generate_interview(
         difficulty=request.difficulty,
     )
 
+
     question_service = InterviewQuestionService(db)
+
 
     question_service.create_questions(
         interview_id=interview.id,
-        questions=[q.question for q in ai_response.questions],
+        questions=[
+            q.question 
+            for q in ai_response.questions
+        ],
         difficulty=request.difficulty,
     )
+
 
     return {
         "interview": interview,
         "questions": ai_response.questions,
     }
+
+
 
 @router.get(
     "/my",
@@ -107,13 +130,18 @@ def get_my_interviews(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+
     interview_service = InterviewService(db)
+
 
     interviews = interview_service.get_user_interviews(
         current_user.id
     )
 
+
     return interviews
+
+
 
 @router.get(
     "/{interview_id}/results",
@@ -124,11 +152,14 @@ def get_interview_results(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+
     interview_service = InterviewService(db)
+
 
     interview = interview_service.get_interview(
         interview_id
     )
+
 
     if not interview:
         raise HTTPException(
@@ -136,18 +167,24 @@ def get_interview_results(
             detail="Interview not found",
         )
 
-    # Security check
+
     if interview.user_id != current_user.id:
         raise HTTPException(
             status_code=403,
-            detail="Not authorized to view this interview",
+            detail="Not authorized",
         )
+
 
     results = interview_service.get_interview_results(
         interview_id
     )
 
+
     return results
+
+
+
+
 
 @router.get(
     "/{interview_id}/report",
@@ -161,9 +198,11 @@ def get_interview_report(
 
     interview_service = InterviewService(db)
 
+
     interview = interview_service.get_interview(
         interview_id
     )
+
 
     if not interview:
         raise HTTPException(
@@ -171,7 +210,7 @@ def get_interview_report(
             detail="Interview not found",
         )
 
-    # Security check
+
     if interview.user_id != current_user.id:
         raise HTTPException(
             status_code=403,
@@ -179,27 +218,40 @@ def get_interview_report(
         )
 
 
+
+    report_service = InterviewReportService(db)
+
+
+
+    # Check existing saved report
+
+    existing_report = report_service.get_report(
+        interview_id
+    )
+
+
+    if existing_report:
+        return existing_report
+
+
+
+
+    # Get interview answers
+
     results = interview_service.get_interview_results(
         interview_id
     )
 
 
-    if not results:
-        raise HTTPException(
-            status_code=404,
-            detail="No interview results found",
-        )
-
-
-    formatted_results = ""
+    formatted_results = []
 
 
     for item in results.questions:
 
-        if not item.answer:
-            continue
+        if item.answer:
 
-        formatted_results += f"""
+            formatted_results.append(
+                f"""
 Question:
 {item.question}
 
@@ -217,11 +269,17 @@ Feedback:
 
 -------------------------
 """
+            )
+
+
+
     if not formatted_results:
         raise HTTPException(
-                status_code=404,
-                detail="No answered questions found",
-                )
+            status_code=404,
+            detail="No answered questions found",
+        )
+
+
 
     ai_service = AIService()
 
@@ -231,5 +289,11 @@ Feedback:
     )
 
 
-    return report
 
+    saved_report = report_service.create_report(
+        interview_id=interview_id,
+        report_data=report.model_dump(),
+    )
+
+
+    return saved_report

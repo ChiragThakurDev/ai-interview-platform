@@ -5,7 +5,7 @@ from app.ai.prompts import (RESUME_ANALYSIS_PROMPT, INTERVIEW_GENERATION_PROMPT,
 from app.schemas.ai import (ResumeAnalysisResponse, AIInterviewResponse, AIAnswerEvaluationResponse,)
 
 from app.schemas.interview_report import (
-    InterviewReportResponse,
+    AIInterviewReportResponse,
 )
 
 
@@ -59,7 +59,7 @@ class AIService:
 
         data = json.loads(response.content)
 
-        return InterviewReportResponse.model_validate(data)
+        return AIInterviewReportResponse.model_validate(data)
 
     def evaluate_answer(
             self,

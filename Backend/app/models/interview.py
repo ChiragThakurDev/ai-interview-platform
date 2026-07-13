@@ -67,3 +67,10 @@ class Interview(Base):
         back_populates="interview",
         cascade="all, delete-orphan",
     )
+
+    report = relationship(
+    "InterviewReport",
+    back_populates="interview",
+    uselist=False,
+    cascade="all, delete-orphan",
+    )

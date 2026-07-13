@@ -3,3 +3,7 @@ from .interview_result import (
     InterviewInfoResponse,
     QuestionResultResponse,
 )
+
+from .interview_report import (
+    InterviewReportResponse,
+)

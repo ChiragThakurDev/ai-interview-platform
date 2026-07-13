@@ -8,4 +8,5 @@ from .api_key import APIKey
 from .interview import Interview
 from .interview_question import InterviewQuestion
 from .interview_answer import InterviewAnswer
+from app.models.interview_report import InterviewReport
 
