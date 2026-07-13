@@ -22,7 +22,7 @@ class InterviewQuestionService:
                 interview_id=interview_id,
                 question=question,
                 category="General",
-                difficulty="Medium",
+                difficulty=difficulty.capitalize(),
             )
             for question in questions
         ]

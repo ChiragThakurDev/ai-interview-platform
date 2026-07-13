@@ -8,7 +8,7 @@ from app.dependencies.auth import get_current_user
 
 from app.models.user import User
 
-from app.schemas.interview import GenerateInterviewRequest
+from app.schemas.interview import (GenerateInterviewRequest,GenerateInterviewResponse, InterviewListResponse,)
 
 from app.services.resume_service import ResumeService
 from app.services.interview_service import InterviewService
@@ -26,7 +26,7 @@ router = APIRouter(
 )
 
 
-@router.post("/generate/{resume_id}")
+@router.post("/generate/{resume_id}",response_model=GenerateInterviewResponse,)
 def generate_interview(
     resume_id: int,
     request: GenerateInterviewRequest,
@@ -87,3 +87,19 @@ def generate_interview(
         "interview": interview,
         "questions": ai_response.questions,
     }
+
+@router.get(
+    "/my",
+    response_model=list[InterviewListResponse],
+)
+def get_my_interviews(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    interview_service = InterviewService(db)
+
+    interviews = interview_service.get_user_interviews(
+        current_user.id
+    )
+
+    return interviews
