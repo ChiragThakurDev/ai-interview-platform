@@ -52,6 +52,22 @@ def get_dashboard(
     )
 
 @router.get(
+    "/performance-history",
+)
+def get_performance_history(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    service = DashboardService(db)
+
+
+    return service.get_performance_history(
+        current_user.id
+    )
+
+
+@router.get(
     "/skills",
     response_model=SkillReportResponse,
 )
@@ -145,5 +161,4 @@ Feedback:
 
 
     return saved_report
-
 

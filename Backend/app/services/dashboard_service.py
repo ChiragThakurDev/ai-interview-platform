@@ -103,3 +103,30 @@ class DashboardService:
 
             "recent_interviews": recent,
         }
+
+    def get_performance_history(
+        self,
+        user_id: int,
+    ):
+
+        results = self.repository.get_performance_history(
+            user_id
+        )
+
+        history = []
+
+        for interview, report in results:
+
+            history.append(
+                {
+                    "interview_id": interview.id,
+                    "role": interview.role,
+                    "difficulty": interview.difficulty,
+                    "score": report.overall_score,
+                    "date": interview.created_at,
+                }
+            )
+
+        return {
+            "history": history
+        }

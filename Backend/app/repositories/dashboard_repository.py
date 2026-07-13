@@ -70,3 +70,27 @@ class DashboardRepository:
             )
             .count()
         )
+
+
+    def get_performance_history(
+        self,
+        user_id: int,
+    ):
+
+        return (
+            self.db.query(
+                Interview,
+                InterviewReport,
+            )
+            .join(
+                InterviewReport,
+                Interview.id == InterviewReport.interview_id,
+            )
+            .filter(
+                Interview.user_id == user_id
+            )
+            .order_by(
+                Interview.created_at.asc()
+            )
+            .all()
+        )
