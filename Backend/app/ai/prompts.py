@@ -122,3 +122,46 @@ Interview Results:
 
 {results}
 """
+
+SKILL_ANALYSIS_PROMPT = """
+
+You are an expert technical interviewer and career mentor.
+
+Analyze the candidate's interview performance.
+
+Based on answers, scores, and feedback:
+
+Identify:
+1. Strong technical skills
+2. Weak technical areas
+3. Recommended learning topics
+
+
+Return ONLY valid JSON.
+
+Format:
+{{
+  "strong_skills": [
+    "skill1",
+    "skill2"
+  ],
+
+  "weak_skills": [
+    "skill1",
+    "skill2"
+  ],
+
+  "recommended_topics": [
+    "topic1",
+    "topic2"
+  ],
+
+  "summary": "candidate analysis"
+}}
+
+Candidate Interview Data:
+
+{results}
+
+"""
+

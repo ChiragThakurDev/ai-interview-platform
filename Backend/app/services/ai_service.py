@@ -1,8 +1,20 @@
 import json
 
 from app.ai.llm import get_llm
-from app.ai.prompts import (RESUME_ANALYSIS_PROMPT, INTERVIEW_GENERATION_PROMPT, ANSWER_EVALUATION_PROMPT,INTERVIEW_REPORT_PROMPT,)
-from app.schemas.ai import (ResumeAnalysisResponse, AIInterviewResponse, AIAnswerEvaluationResponse,)
+from app.ai.prompts import (
+    RESUME_ANALYSIS_PROMPT,
+    INTERVIEW_GENERATION_PROMPT,
+    ANSWER_EVALUATION_PROMPT,
+    INTERVIEW_REPORT_PROMPT,
+    SKILL_ANALYSIS_PROMPT,
+)
+
+from app.schemas.ai import (
+    ResumeAnalysisResponse,
+    AIInterviewResponse,
+    AIAnswerEvaluationResponse,
+    AISkillReportResponse,
+)
 
 from app.schemas.interview_report import (
     AIInterviewReportResponse,
@@ -76,6 +88,31 @@ class AIService:
         data=json.loads(response.content)
 
         return AIAnswerEvaluationResponse.model_validate(data)
+
+
+    def generate_skill_report(
+    self,
+    results: str,
+    ):
+
+        prompt = SKILL_ANALYSIS_PROMPT.format(
+        results=results
+        )
+
+
+        response = self.llm.invoke(
+        prompt
+        )
+
+
+        data = json.loads(
+        response.content
+        )
+
+
+        return AISkillReportResponse.model_validate(
+        data
+        )
 
 
 

@@ -31,3 +31,13 @@ class AIAnswerEvaluationResponse(BaseModel):
     score: int = Field(..., ge=0, le=100)
 
     feedback: str
+
+class AISkillReportResponse(BaseModel):
+
+    strong_skills: list[str]
+
+    weak_skills: list[str]
+
+    recommended_topics: list[str]
+
+    summary: str

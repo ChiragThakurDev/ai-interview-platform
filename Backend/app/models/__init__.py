@@ -9,4 +9,4 @@ from .interview import Interview
 from .interview_question import InterviewQuestion
 from .interview_answer import InterviewAnswer
 from app.models.interview_report import InterviewReport
-
+from app.models.skill_report import SkillReport
