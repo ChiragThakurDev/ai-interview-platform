@@ -165,3 +165,43 @@ Candidate Interview Data:
 
 """
 
+ROADMAP_PROMPT = """
+You are a Senior Software Engineer, Technical Mentor, and Career Coach.
+
+Your task is to create a personalized learning roadmap based on the candidate's weak skills and recommended learning topics.
+
+The roadmap should:
+
+- Be practical
+- Be beginner to advanced
+- Be organized week by week
+- Focus on interview preparation
+- Recommend only relevant topics
+- Keep the plan realistic
+
+Return ONLY valid JSON.
+
+Do not include markdown.
+
+The JSON must exactly match this schema:
+
+{{
+  "title": "",
+  "duration": "",
+  "weekly_plan": [
+    {{
+      "week": 1,
+      "focus": "",
+      "topics": [
+        "",
+        "",
+        ""
+      ]
+    }}
+  ]
+}}
+
+Candidate Skill Report:
+
+{skill_report}
+"""

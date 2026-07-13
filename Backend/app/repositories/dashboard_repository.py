@@ -94,3 +94,48 @@ class DashboardRepository:
             )
             .all()
         )
+
+    def get_reports_by_date(
+    self,
+    user_id: int,
+    ):
+
+        return (
+            self.db.query(
+            InterviewReport
+          )
+            .join(
+            Interview
+          )
+            .filter(
+            Interview.user_id == user_id
+          )
+            .order_by(
+            Interview.created_at
+          )
+            .all()
+       )
+    
+
+    def get_all_answers(
+    self,
+    user_id: int,
+    ):
+
+        return (
+        self.db.query(
+            InterviewAnswer
+          )
+            .join(
+            InterviewAnswer.question
+          )
+            .join(
+            Interview
+          )
+            .filter(
+            Interview.user_id == user_id
+          )
+            .all()
+       ) 
+
+   

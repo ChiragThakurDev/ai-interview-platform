@@ -28,6 +28,13 @@ from app.models.interview import Interview
 
 from app.models.interview_answer import InterviewAnswer
 
+from app.schemas.progress import (
+    ProgressResponse,
+)
+
+from app.schemas.topic_analysis import (
+    TopicAnalysisResponse,
+)
 
 router = APIRouter(
     prefix="/dashboard",
@@ -162,3 +169,34 @@ Feedback:
 
     return saved_report
 
+@router.get(
+    "/progress",
+    response_model=ProgressResponse,
+)
+def get_progress(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    service = DashboardService(db)
+
+    return service.get_progress(
+        current_user.id
+    )
+
+
+
+@router.get(
+    "/topics",
+    response_model=TopicAnalysisResponse,
+)
+def get_topic_analysis(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    service = DashboardService(db)
+
+    return service.get_topic_analysis(
+        current_user.id
+    )
