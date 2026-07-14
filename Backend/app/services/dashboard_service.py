@@ -11,6 +11,7 @@ class DashboardService:
         self,
         db: Session,
     ):
+
         self.repository = DashboardRepository(db)
 
     def get_dashboard(
@@ -205,4 +206,100 @@ class DashboardService:
 
         return {
             "topics": result
+        }
+
+    def get_analytics(
+        self,
+        user_id: int,
+    ):
+
+        reports = self.repository.get_all_reports(
+            user_id
+        )
+
+        report_interviews = (
+            self.repository.get_reports_with_interviews(
+                user_id
+            )
+        )
+
+        interviews = self.repository.get_roles(
+            user_id
+        )
+
+        score_distribution = {
+            "0-20": 0,
+            "21-40": 0,
+            "41-60": 0,
+            "61-80": 0,
+            "81-100": 0,
+        }
+
+        for report in reports:
+
+            score = report.overall_score
+
+            if score <= 20:
+                score_distribution["0-20"] += 1
+
+            elif score <= 40:
+                score_distribution["21-40"] += 1
+
+            elif score <= 60:
+                score_distribution["41-60"] += 1
+
+            elif score <= 80:
+                score_distribution["61-80"] += 1
+
+            else:
+                score_distribution["81-100"] += 1
+
+        difficulty_scores = {
+            "easy": [],
+            "medium": [],
+            "hard": [],
+        }
+
+        for report, interview in report_interviews:
+
+            difficulty = interview.difficulty.lower()
+
+            if difficulty in difficulty_scores:
+                difficulty_scores[difficulty].append(
+                    report.overall_score
+                )
+
+        difficulty_stats = {}
+
+        for difficulty in [
+            "easy",
+            "medium",
+            "hard",
+        ]:
+
+            scores = difficulty_scores[difficulty]
+
+            difficulty_stats[difficulty] = (
+                round(
+                    sum(scores) / len(scores),
+                    2,
+                )
+                if scores
+                else 0
+            )
+
+        role_stats = {}
+
+        for interview in interviews:
+
+            role = interview.role
+
+            role_stats[role] = (
+                role_stats.get(role, 0) + 1
+            )
+
+        return {
+            "score_distribution": score_distribution,
+            "difficulty_stats": difficulty_stats,
+            "role_stats": role_stats,
         }

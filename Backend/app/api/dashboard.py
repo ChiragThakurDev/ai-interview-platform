@@ -36,6 +36,11 @@ from app.schemas.topic_analysis import (
     TopicAnalysisResponse,
 )
 
+from app.schemas.analytics import (
+    AnalyticsResponse,
+)
+
+
 router = APIRouter(
     prefix="/dashboard",
     tags=["Dashboard"],
@@ -198,5 +203,20 @@ def get_topic_analysis(
     service = DashboardService(db)
 
     return service.get_topic_analysis(
+        current_user.id
+    )
+
+@router.get(
+    "/analytics",
+    response_model=AnalyticsResponse,
+)
+def get_analytics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    service = DashboardService(db)
+
+    return service.get_analytics(
         current_user.id
     )

@@ -7,11 +7,11 @@ from app.models.interview_answer import InterviewAnswer
 
 class DashboardRepository:
 
-
-    def __init__(self, db: Session):
+    def __init__(
+        self,
+        db: Session,
+    ):
         self.db = db
-
-
 
     def get_user_interviews(
         self,
@@ -27,8 +27,6 @@ class DashboardRepository:
             )
             .all()
         )
-
-
 
     def get_reports(
         self,
@@ -47,8 +45,6 @@ class DashboardRepository:
             )
             .all()
         )
-
-
 
     def get_answers_count(
         self,
@@ -70,7 +66,6 @@ class DashboardRepository:
             )
             .count()
         )
-
 
     def get_performance_history(
         self,
@@ -96,46 +91,100 @@ class DashboardRepository:
         )
 
     def get_reports_by_date(
-    self,
-    user_id: int,
+        self,
+        user_id: int,
     ):
 
         return (
             self.db.query(
-            InterviewReport
-          )
+                InterviewReport
+            )
             .join(
-            Interview
-          )
+                Interview
+            )
             .filter(
-            Interview.user_id == user_id
-          )
+                Interview.user_id == user_id
+            )
             .order_by(
-            Interview.created_at
-          )
+                Interview.created_at
+            )
             .all()
-       )
-    
+        )
 
     def get_all_answers(
-    self,
-    user_id: int,
+        self,
+        user_id: int,
     ):
 
         return (
-        self.db.query(
-            InterviewAnswer
-          )
+            self.db.query(
+                InterviewAnswer
+            )
             .join(
-            InterviewAnswer.question
-          )
+                InterviewAnswer.question
+            )
             .join(
-            Interview
-          )
+                Interview
+            )
             .filter(
-            Interview.user_id == user_id
-          )
+                Interview.user_id == user_id
+            )
             .all()
-       ) 
+        )
 
-   
+    # -----------------------------
+    # Analytics Methods
+    # -----------------------------
+
+    def get_all_reports(
+        self,
+        user_id: int,
+    ):
+
+        return (
+            self.db.query(
+                InterviewReport
+            )
+            .join(
+                Interview
+            )
+            .filter(
+                Interview.user_id == user_id
+            )
+            .all()
+        )
+
+    def get_reports_with_interviews(
+        self,
+        user_id: int,
+    ):
+
+        return (
+            self.db.query(
+                InterviewReport,
+                Interview,
+            )
+            .join(
+                Interview,
+                Interview.id == InterviewReport.interview_id,
+            )
+            .filter(
+                Interview.user_id == user_id
+            )
+            .all()
+        )
+
+    def get_roles(
+        self,
+        user_id: int,
+    ):
+
+        return (
+            self.db.query(
+                Interview
+            )
+            .filter(
+                Interview.user_id == user_id
+            )
+            .all()
+        )
