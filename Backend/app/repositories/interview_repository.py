@@ -44,6 +44,28 @@ class InterviewRepository:
             .first()
         )
 
-    def delete(self, interview: Interview):
+    def update(
+            self,
+            interview:Interview,
+    ):
+        self.db.commit()
+        self.db.refresh(interview)
+        return interview
+
+    def get_active_interview(
+            self,
+            user_id:int,
+    ):
+        return(
+                self.db.query(Interview)
+                .filter(
+                    Interview.user_id==user_id,
+                    Interview.status=="in_progress",
+                    )
+                .first()
+              )
+
+    def delete(self,interview:Interview):
         self.db.delete(interview)
         self.db.commit()
+

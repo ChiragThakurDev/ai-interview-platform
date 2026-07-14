@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy.orm import Session
 
 from app.models.interview import Interview
@@ -29,6 +31,7 @@ class InterviewService:
             title=f"{role} Interview",
             role=role,
             difficulty=difficulty,
+            status="pending",
         )
 
         return self.repository.create(interview)
@@ -95,6 +98,65 @@ class InterviewService:
             total_questions=len(interview.questions),
             questions=question_results,
         )
+
+    def start_interview(
+        self,
+        interview_id: int,
+    ):
+        interview = self.repository.get_by_id(
+            interview_id
+        )
+
+        if not interview:
+            return None
+
+        interview.status = "in_progress"
+        interview.started_at = datetime.now(
+            timezone.utc
+        )
+
+        return self.repository.update(interview)
+
+    def complete_interview(
+        self,
+        interview_id: int,
+    ):
+        interview = self.repository.get_by_id(
+            interview_id
+        )
+
+        if not interview:
+            return None
+
+        interview.status = "completed"
+        interview.completed_at = datetime.now(
+            timezone.utc
+        )
+
+        if interview.started_at:
+            interview.duration = int(
+                (
+                    interview.completed_at
+                    - interview.started_at
+                ).total_seconds()
+            )
+
+        return self.repository.update(interview)
+
+    def cancel_interview(
+        self,
+        interview_id: int,
+    ):
+        interview = self.repository.get_by_id(
+            interview_id
+        )
+
+        if not interview:
+            return None
+
+        interview.status = "cancelled"
+
+        return self.repository.update(interview)
 
     def delete_interview(
         self,

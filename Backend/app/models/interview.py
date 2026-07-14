@@ -37,15 +37,36 @@ class Interview(Base):
         nullable=False,
     )
 
-    role=Column(
+    role = Column(
         String,
         nullable=False,
-     )
+    )
 
-    difficulty=Column(
+    difficulty = Column(
         String,
         nullable=False,
-        )
+    )
+
+    status = Column(
+        String,
+        nullable=False,
+        default="pending",
+    )
+
+    started_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    completed_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    duration = Column(
+        Integer,
+        nullable=True,
+    )
 
     created_at = Column(
         DateTime(timezone=True),
@@ -69,8 +90,8 @@ class Interview(Base):
     )
 
     report = relationship(
-    "InterviewReport",
-    back_populates="interview",
-    uselist=False,
-    cascade="all, delete-orphan",
+        "InterviewReport",
+        back_populates="interview",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
