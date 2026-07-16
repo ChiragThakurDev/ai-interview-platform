@@ -1,12 +1,6 @@
-from sqlalchemy import (
-    Column,
-    Integer,
-    ForeignKey,
-    String,
-    DateTime,
-)
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from app.db.base import Base
 
@@ -37,15 +31,50 @@ class Interview(Base):
         nullable=False,
     )
 
-    role=Column(
+    role = Column(
         String,
         nullable=False,
-     )
+    )
 
-    difficulty=Column(
+    difficulty = Column(
         String,
         nullable=False,
-        )
+    )
+
+    # -------------------------
+    # Interview Session Fields
+    # -------------------------
+    started_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    completed_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    status = Column(
+        String(20),
+        nullable=False,
+        default="pending",
+    )
+
+    current_question = Column(
+        Integer,
+        nullable=False,
+        default=1,
+    )
+
+    score = Column(
+        Integer,
+        nullable=True,
+    )
+
+    duration = Column(
+        Integer,
+        nullable=True,
+    )
 
     created_at = Column(
         DateTime(timezone=True),
@@ -69,8 +98,8 @@ class Interview(Base):
     )
 
     report = relationship(
-    "InterviewReport",
-    back_populates="interview",
-    uselist=False,
-    cascade="all, delete-orphan",
+        "InterviewReport",
+        back_populates="interview",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
