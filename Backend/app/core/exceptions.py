@@ -44,3 +44,41 @@ class AuthException:
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many failed login attempts. Please try again after 15 minutes.",
         )
+
+
+class InterviewException:
+
+    @staticmethod
+    def not_found():
+        return HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found",
+        )
+
+    @staticmethod
+    def already_started():
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Interview already started",
+        )
+
+    @staticmethod
+    def already_completed():
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Interview already completed",
+        )
+
+    @staticmethod
+    def invalid_state():
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Interview is not in a valid state",
+        )
+
+    @staticmethod
+    def question_not_found():
+        return HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question not found",
+        )

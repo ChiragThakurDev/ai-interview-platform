@@ -15,7 +15,7 @@ class InterviewQuestionService:
         self,
         interview_id: int,
         questions: list[str],
-        difficulty:str,
+        difficulty: str,
     ):
         question_objects = [
             InterviewQuestion(
@@ -31,8 +31,20 @@ class InterviewQuestionService:
 
         return question_objects
 
-    def get_questions(self, interview_id: int):
+    def get_question(
+        self,
+        question_id: int,
+    ):
+        return self.repository.get_by_id(question_id)
+
+    def get_questions(
+        self,
+        interview_id: int,
+    ):
         return self.repository.get_by_interview(interview_id)
 
-    def delete_questions(self, interview_id: int):
+    def delete_questions(
+        self,
+        interview_id: int,
+    ):
         self.repository.delete_all(interview_id)

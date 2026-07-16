@@ -12,6 +12,9 @@ from app.schemas.interview import (
     GenerateInterviewRequest,
     GenerateInterviewResponse,
     InterviewListResponse,
+    StartInterviewResponse,
+    CurrentQuestionResponse,
+    FinishInterviewResponse,
 )
 
 from app.schemas.interview_result import (
@@ -140,6 +143,64 @@ def get_my_interviews(
 
 
     return interviews
+
+@router.post(
+    "/{interview_id}/start",
+    response_model=StartInterviewResponse,
+)
+def start_interview(
+    interview_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    service = InterviewService(db)
+
+    interview = service.get_interview(interview_id)
+
+    if interview is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Interview not found",
+        )
+
+    if interview.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized",
+        )
+
+    return service.start_interview(interview_id)
+
+@router.get(
+    "/{interview_id}/current-question",
+    response_model=CurrentQuestionResponse,
+)
+def get_current_question(
+    interview_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    service = InterviewService(db)
+
+    interview = service.get_interview(interview_id)
+
+    if interview is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Interview not found",
+        )
+
+    if interview.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized",
+        )
+
+    return service.get_current_question(interview_id)
+
+
 
 
 
@@ -297,3 +358,98 @@ Feedback:
 
 
     return saved_report
+
+
+@router.post(
+    "/{interview_id}/finish",
+    response_model=FinishInterviewResponse,
+)
+def finish_interview(
+    interview_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    service = InterviewService(db)
+
+    interview = service.get_interview(interview_id)
+
+    if interview is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Interview not found",
+        )
+
+    if interview.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized",
+        )
+
+    return service.finish_interview(interview_id)
+
+
+@router.post(
+    "/{interview_id}/start",
+    response_model=StartInterviewResponse,
+)
+def start_interview(
+    interview_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    interview_service = InterviewService(db)
+
+    interview = interview_service.get_interview(
+        interview_id
+    )
+
+    if not interview:
+        raise HTTPException(
+            status_code=404,
+            detail="Interview not found",
+        )
+
+    if interview.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized",
+        )
+
+    return interview_service.start_interview(
+        interview
+    )
+
+@router.get(
+    "/{interview_id}/current-question",
+    response_model=CurrentQuestionResponse,
+)
+def get_current_question(
+    interview_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    interview_service = InterviewService(db)
+
+    interview = interview_service.get_interview(
+        interview_id
+    )
+
+    if not interview:
+        raise HTTPException(
+            status_code=404,
+            detail="Interview not found",
+        )
+
+    if interview.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized",
+        )
+
+    return interview_service.get_current_question(
+        interview
+    )
+

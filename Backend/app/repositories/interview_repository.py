@@ -44,6 +44,14 @@ class InterviewRepository:
             .first()
         )
 
+    def update(self, interview: Interview):
+        self.db.commit()
+        self.db.refresh(interview)
+        return interview
+
+    def save(self):
+        self.db.commit()
+
     def delete(self, interview: Interview):
         self.db.delete(interview)
         self.db.commit()
