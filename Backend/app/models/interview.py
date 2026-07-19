@@ -1,4 +1,10 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -16,13 +22,19 @@ class Interview(Base):
 
     user_id = Column(
         Integer,
-        ForeignKey("users.id", ondelete="CASCADE"),
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+        ),
         nullable=False,
     )
 
     resume_id = Column(
         Integer,
-        ForeignKey("resumes.id", ondelete="CASCADE"),
+        ForeignKey(
+            "resumes.id",
+            ondelete="CASCADE",
+        ),
         nullable=False,
     )
 
@@ -41,9 +53,24 @@ class Interview(Base):
         nullable=False,
     )
 
-    # -------------------------
+    # ==========================================
     # Interview Session Fields
-    # -------------------------
+    # ==========================================
+
+    status = Column(
+        String(20),
+        nullable=False,
+        default="pending",
+        server_default="pending",
+    )
+
+    current_question = Column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
+
     started_at = Column(
         DateTime(timezone=True),
         nullable=True,
@@ -54,32 +81,28 @@ class Interview(Base):
         nullable=True,
     )
 
-    status = Column(
-        String(20),
-        nullable=False,
-        default="pending",
-    )
-
-    current_question = Column(
-        Integer,
-        nullable=False,
-        default=1,
-    )
-
     score = Column(
         Integer,
         nullable=True,
+        default=0,
+        server_default="0",
     )
 
     duration = Column(
         Integer,
         nullable=True,
+        default=0,
+        server_default="0",
     )
 
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
     )
+
+    # ==========================================
+    # Relationships
+    # ==========================================
 
     user = relationship(
         "User",

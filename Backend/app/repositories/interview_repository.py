@@ -28,6 +28,13 @@ class InterviewRepository:
             .filter(Interview.user_id == user_id)
             .all()
         )
+    
+    def update(self,
+               interview:Interview,
+    ):
+        self.db.commit()
+        self.db.refresh(interview)
+        return interview
 
     def get_with_results(
         self,
@@ -43,11 +50,6 @@ class InterviewRepository:
             .filter(Interview.id == interview_id)
             .first()
         )
-
-    def update(self, interview: Interview):
-        self.db.commit()
-        self.db.refresh(interview)
-        return interview
 
     def save(self):
         self.db.commit()
