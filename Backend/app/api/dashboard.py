@@ -19,7 +19,6 @@ from app.services.ai_service import AIService
 from app.services.skill_report_service import (
     SkillReportService,
 )
-
 from app.schemas.skill_report import (
     SkillReportResponse,
 )

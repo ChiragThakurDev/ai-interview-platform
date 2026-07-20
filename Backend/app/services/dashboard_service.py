@@ -1,8 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.repositories.dashboard_repository import (
-    DashboardRepository,
-)
+from app.repositories.dashboard_repository import DashboardRepository
 
 
 class DashboardService:
@@ -11,21 +9,19 @@ class DashboardService:
         self,
         db: Session,
     ):
-
         self.repository = DashboardRepository(db)
+
+    # ----------------------------------
+    # Dashboard Overview
+    # ----------------------------------
 
     def get_dashboard(
         self,
         user_id: int,
     ):
 
-        reports = self.repository.get_reports(
-            user_id
-        )
-
-        interviews = self.repository.get_user_interviews(
-            user_id
-        )
+        reports = self.repository.get_reports(user_id)
+        interviews = self.repository.get_user_interviews(user_id)
 
         scores = [
             report.overall_score
@@ -33,7 +29,7 @@ class DashboardService:
         ]
 
         average_score = (
-            sum(scores) / len(scores)
+            round(sum(scores) / len(scores), 2)
             if scores
             else 0
         )
@@ -44,7 +40,7 @@ class DashboardService:
             else 0
         )
 
-        recent = []
+        recent_interviews = []
 
         for interview in sorted(
             interviews,
@@ -61,7 +57,7 @@ class DashboardService:
                 None,
             )
 
-            recent.append(
+            recent_interviews.append(
                 {
                     "id": interview.id,
                     "role": interview.role,
@@ -77,28 +73,28 @@ class DashboardService:
 
         return {
             "total_interviews": len(interviews),
-            "average_score": round(
-                average_score,
-                2,
-            ),
+            "average_score": average_score,
             "highest_score": highest_score,
-            "total_questions_answered":
-                self.repository.get_answers_count(
-                    user_id
-                ),
-            "recent_interviews": recent,
+            "total_questions_answered": self.repository.get_answers_count(
+                user_id
+            ),
+            "recent_interviews": recent_interviews,
         }
+
+    # ----------------------------------
+    # Performance History
+    # ----------------------------------
 
     def get_performance_history(
         self,
         user_id: int,
     ):
 
+        history = []
+
         results = self.repository.get_performance_history(
             user_id
         )
-
-        history = []
 
         for interview, report in results:
 
@@ -113,8 +109,12 @@ class DashboardService:
             )
 
         return {
-            "history": history
+            "history": history,
         }
+
+    # ----------------------------------
+    # Progress
+    # ----------------------------------
 
     def get_progress(
         self,
@@ -160,6 +160,10 @@ class DashboardService:
             "trend": trend,
         }
 
+    # ----------------------------------
+    # Topic Analysis
+    # ----------------------------------
+
     def get_topic_analysis(
         self,
         user_id: int,
@@ -172,6 +176,9 @@ class DashboardService:
         topics = {}
 
         for answer in answers:
+
+            if answer.score is None:
+                continue
 
             topic = answer.question.category
 
@@ -205,8 +212,12 @@ class DashboardService:
         )
 
         return {
-            "topics": result
+            "topics": result,
         }
+
+    # ----------------------------------
+    # Analytics
+    # ----------------------------------
 
     def get_analytics(
         self,
