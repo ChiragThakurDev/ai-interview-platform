@@ -62,7 +62,10 @@ class User(Base):
         onupdate=func.now(),
     )
 
-    # Relationship with API Keys
+    # ==========================
+    # Relationships
+    # ==========================
+
     api_keys = relationship(
         "APIKey",
         back_populates="user",
@@ -70,20 +73,26 @@ class User(Base):
     )
 
     resumes = relationship(
-    "Resume",
-    back_populates="user",
-    cascade="all, delete-orphan",
-      )
+        "Resume",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     interviews = relationship(
-    "Interview",
-    back_populates="user",
-    cascade="all, delete-orphan",
-     )
+        "Interview",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     skill_report = relationship(
-    "SkillReport",
-    back_populates="user",
-    uselist=False,
-    cascade="all, delete-orphan",
+        "SkillReport",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+    api_logs = relationship(
+        "APILog",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )

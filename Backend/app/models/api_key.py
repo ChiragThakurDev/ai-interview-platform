@@ -36,7 +36,6 @@ class APIKey(Base):
         nullable=False,
     )
 
-    # NEW COLUMN
     permissions: Mapped[str] = mapped_column(
         String(255),
         default="read",
