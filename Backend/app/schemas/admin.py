@@ -102,3 +102,22 @@ class PaginatedUsersResponse(BaseModel):
 
     users: list[AdminUserResponse]
 
+class PopularRoleResponse(BaseModel):
+
+    role: str
+
+    count: int
+
+
+class AdminAnalyticsResponse(BaseModel):
+
+    registrations: dict[str, int]
+
+    interviews: dict[str, int]
+
+    popular_roles: list[PopularRoleResponse]
+
+    difficulty_distribution: dict[str, int]
+
+    score_distribution: dict[str, int]
+

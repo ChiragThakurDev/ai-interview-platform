@@ -212,3 +212,156 @@ class AdminRepository:
                 )
 
         return users, total
+
+    # =====================================================
+    # Admin Analytics
+    # =====================================================
+
+    def get_registration_stats(self):
+
+        users = self.db.query(
+                User
+                ).all()
+
+        stats = {}
+
+        for user in users:
+
+            month = user.created_at.strftime(
+                    "%b"
+                    )
+
+            stats[month] = (
+                    stats.get(
+                        month,
+                        0,
+                        ) + 1
+                    )
+
+        return stats
+
+    def get_interview_stats(self):
+
+        completed = (
+                self.db.query(
+                    InterviewReport
+                    )
+                .count()
+                )
+
+        pending = (
+                self.db.query(
+                    Interview
+                    )
+                .filter(
+                    Interview.status != "completed"
+                    )
+                .count()
+                )
+
+        return {
+                "completed": completed,
+                "pending": pending,
+                }
+
+    def get_popular_roles(self):
+
+        interviews = (
+                self.db.query(
+                    Interview
+                    )
+                .all()
+                )
+
+        roles = {}
+
+        for interview in interviews:
+
+            role = interview.role
+
+            roles[role] = (
+                    roles.get(
+                        role,
+                        0,
+                        ) + 1
+                    )
+
+        result = []
+
+        for role, count in roles.items():
+
+            result.append(
+                    {
+                        "role": role,
+                        "count": count,
+                        }
+                    )
+
+        result.sort(
+                key=lambda x: x["count"],
+                reverse=True,
+                )
+
+        return result
+
+    def get_difficulty_distribution(self):
+
+        interviews = (
+                self.db.query(
+                    Interview
+                    )
+                .all()
+                )
+
+        distribution = {
+                "easy": 0,
+                "medium": 0,
+                "hard": 0,
+                }
+
+        for interview in interviews:
+
+            difficulty = interview.difficulty.lower()
+
+            if difficulty in distribution:
+                distribution[difficulty] += 1
+
+        return distribution
+
+    def get_score_distribution(self):
+
+        reports = (
+                self.db.query(
+                    InterviewReport
+                    )
+                .all()
+                )
+
+        distribution = {
+                "0-20": 0,
+                "21-40": 0,
+                "41-60": 0,
+                "61-80": 0,
+                "81-100": 0,
+                }
+
+        for report in reports:
+
+            score = report.overall_score
+
+            if score <= 20:
+                distribution["0-20"] += 1
+
+            elif score <= 40:
+                distribution["21-40"] += 1
+
+            elif score <= 60:
+                distribution["41-60"] += 1
+
+            elif score <= 80:
+                distribution["61-80"] += 1
+
+            else:
+                distribution["81-100"] += 1
+
+        return distribution

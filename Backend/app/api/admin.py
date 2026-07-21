@@ -13,15 +13,13 @@ from app.models.user import User
 from app.services.admin_service import (
     AdminService,
 )
-
 from app.schemas.admin import (
     AdminDashboardResponse,
     AdminUserResponse,
     RecentActivityResponse,
     PaginatedUsersResponse,
+    AdminAnalyticsResponse,
 )
-
-
 router = APIRouter(
     prefix="/admin",
     tags=["Admin"],
@@ -195,3 +193,20 @@ def get_recent_activity(
     service = AdminService(db)
 
     return service.get_recent_activity()
+
+# =====================================================
+# Admin Analytics
+# =====================================================
+
+@router.get(
+    "/analytics",
+    response_model=AdminAnalyticsResponse,
+)
+def get_analytics(
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin),
+):
+
+    service = AdminService(db)
+
+    return service.get_analytics()

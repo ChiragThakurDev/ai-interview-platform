@@ -2,8 +2,8 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.repositories.admin_repository import (
-    AdminRepository,
-)
+        AdminRepository,
+        )
 
 
 class AdminService:
@@ -155,4 +155,27 @@ class AdminService:
                 "limit": limit,
                 "total": total,
                 "users": users,
+                }
+
+        # =====================================================
+    # Admin Analytics
+    # =====================================================
+
+    def get_analytics(self):
+
+        return {
+                "registrations":
+                self.repository.get_registration_stats(),
+
+                "interviews":
+                self.repository.get_interview_stats(),
+
+                "popular_roles":
+                self.repository.get_popular_roles(),
+
+                "difficulty_distribution":
+                self.repository.get_difficulty_distribution(),
+
+                "score_distribution":
+                self.repository.get_score_distribution(),
                 }
