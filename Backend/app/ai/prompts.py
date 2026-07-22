@@ -643,4 +643,104 @@ Project:
 """
 
 
+# =====================================================
+# CODING INTERVIEW GENERATION PROMPT
+# =====================================================
 
+CODING_INTERVIEW_GENERATION_PROMPT = """
+You are a Senior Software Engineer and Coding Interview Expert.
+
+Generate exactly {number_of_questions} coding interview problems.
+
+Candidate Role:
+{role}
+
+Company:
+{company}
+
+Programming Language:
+{language}
+
+Difficulty:
+{difficulty}
+
+
+STRICT OUTPUT RULES:
+
+- Output ONLY JSON.
+- Do NOT use markdown.
+- Do NOT add explanations.
+- Do NOT add ```json blocks.
+- The first character must be {{
+- The last character must be }}
+- The JSON key must be exactly "questions".
+- The value of questions must be an array.
+
+
+Required JSON format:
+
+{{
+  "questions": [
+    {{
+      "title": "Problem title",
+      "description": "Problem description",
+      "starter_code": "Starter code",
+      "solution": "Expected solution approach",
+      "difficulty": "easy|medium|hard"
+    }}
+  ]
+}}
+
+Generate problems now.
+"""
+
+
+# =====================================================
+# CODING ANSWER EVALUATION PROMPT
+# =====================================================
+
+CODE_EVALUATION_PROMPT = """
+You are a Senior Software Engineer reviewing a coding interview submission.
+
+Evaluate the candidate code.
+
+Problem:
+
+{question}
+
+
+Programming Language:
+
+{language}
+
+
+Candidate Code:
+
+{code}
+
+
+Evaluate:
+
+- Correctness
+- Algorithm choice
+- Time complexity
+- Space complexity
+- Code quality
+- Edge cases
+- Best practices
+
+
+Return ONLY valid JSON.
+
+Schema:
+
+{{
+    "passed": false,
+    "score": 0,
+    "feedback": "",
+    "output": "",
+    "time_complexity": "",
+    "space_complexity": ""
+}}
+
+"""
