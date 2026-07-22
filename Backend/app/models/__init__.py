@@ -16,3 +16,7 @@ from .skill_report import SkillReport
 from .chat_session import ChatSession
 from .chat_message import ChatMessage
 from app.models.roadmap import Roadmap
+
+from app.models.coding_interview import CodingInterview
+from app.models.coding_question import CodingQuestion
+from app.models.coding_submission import CodingSubmission

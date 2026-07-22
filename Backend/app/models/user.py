@@ -101,3 +101,9 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+
+    coding_interviews = relationship(
+    "CodingInterview",
+    back_populates="user",
+    cascade="all, delete-orphan",
+     )

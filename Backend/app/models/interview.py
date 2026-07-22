@@ -48,6 +48,11 @@ class Interview(Base):
         nullable=False,
     )
 
+    company =Column(
+            String,
+            nullable=True,
+            )
+
     difficulty = Column(
         String,
         nullable=False,
