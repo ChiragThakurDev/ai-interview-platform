@@ -4,28 +4,28 @@ from app.ai.llm import get_ai_provider
 from app.ai.parser import parse_json_response
 
 from app.ai.prompts import (
-    RESUME_ANALYSIS_PROMPT,
-    INTERVIEW_GENERATION_PROMPT,
-    ANSWER_EVALUATION_PROMPT,
-    INTERVIEW_REPORT_PROMPT,
-    SKILL_ANALYSIS_PROMPT,
-    ROADMAP_PROMPT,
-)
+        RESUME_ANALYSIS_PROMPT,
+        INTERVIEW_GENERATION_PROMPT,
+        ANSWER_EVALUATION_PROMPT,
+        INTERVIEW_REPORT_PROMPT,
+        SKILL_ANALYSIS_PROMPT,
+        ROADMAP_PROMPT,
+        )
 
 from app.schemas.ai import (
-    ResumeAnalysisResponse,
-    AIInterviewResponse,
-    AIAnswerEvaluationResponse,
-    AISkillReportResponse,
-)
+        ResumeAnalysisResponse,
+        AIInterviewResponse,
+        AIAnswerEvaluationResponse,
+        AISkillReportResponse,
+        )
 
 from app.schemas.interview_report import (
-    AIInterviewReportResponse,
-)
+        AIInterviewReportResponse,
+        )
 
 from app.schemas.roadmap import (
-    LearningRoadmapResponse,
-)
+        LearningRoadmapResponse,
+        )
 
 
 logger = logging.getLogger(__name__)
@@ -41,155 +41,172 @@ class AIService:
     # =====================================================
 
     def analyze_resume(
-        self,
-        resume_text: str,
-    ):
+            self,
+            resume_text: str,
+            ):
 
         prompt = RESUME_ANALYSIS_PROMPT.format(
-            resume=resume_text
-        )
+                resume=resume_text
+                )
 
         response = self.ai.generate(
-            prompt
-        )
+                prompt
+                )
 
         data = parse_json_response(
-            response
-        )
+                response
+                )
 
         return ResumeAnalysisResponse.model_validate(
-            data
-        )
+                data
+                )
 
-    # =====================================================
-    # Generate Interview Questions
-    # =====================================================
+# =====================================================
+# Generate Interview Questions
+# =====================================================
 
     def generate_interview_questions(
-        self,
-        resume_text: str,
-        role: str,
-        difficulty: str,
-        number_of_questions: int,
-    ):
+            self,
+            resume_text: str,
+            role: str,
+            difficulty: str,
+            number_of_questions: int,
+            company: str | None = None,
+            ):
 
-        prompt = INTERVIEW_GENERATION_PROMPT.format(
-            resume=resume_text,
-            role=role,
-            difficulty=difficulty,
-            number_of_questions=number_of_questions,
-        )
+        if company:
 
-        response = self.ai.generate(
-            prompt
-        )
+            prompt = f"""
+    Generate an interview for the company "{company}".
+
+    Role: {role}
+    Difficulty: {difficulty}
+    Number of Questions: {number_of_questions}
+
+    Candidate Resume:
+      {resume_text}
+
+     The interview should resemble the style and difficulty commonly asked by {company}.
+
+     Return ONLY valid JSON.
+     """
+
+        else:
+
+              prompt = INTERVIEW_GENERATION_PROMPT.format(
+                 resume=resume_text,
+                 role=role,
+                 difficulty=difficulty,
+                 number_of_questions=number_of_questions,
+               )
+
+        response = self.ai.invoke(prompt)
 
         data = parse_json_response(
-            response
-        )
+               response.content
+               )
 
         return AIInterviewResponse.model_validate(
-            data
-        )
-
-    # =====================================================
+               data
+               )
+       # =====================================================
     # Evaluate Interview Answer
     # =====================================================
 
     def evaluate_answer(
-        self,
-        question: str,
-        answer: str,
-    ):
+            self,
+            question: str,
+            answer: str,
+            ):
 
         prompt = ANSWER_EVALUATION_PROMPT.format(
-            question=question,
-            answer=answer,
-        )
+                question=question,
+                answer=answer,
+                )
 
         response = self.ai.generate(
-            prompt
-        )
+                prompt
+                )
 
         data = parse_json_response(
-            response
-        )
+                response
+                )
 
         return AIAnswerEvaluationResponse.model_validate(
-            data
-        )
+                data
+                )
 
     # =====================================================
     # Generate Interview Report
     # =====================================================
 
     def generate_interview_report(
-        self,
-        results: str,
-    ):
+            self,
+            results: str,
+            ):
 
         prompt = INTERVIEW_REPORT_PROMPT.format(
-            results=results
-        )
+                results=results
+                )
 
         response = self.ai.generate(
-            prompt
-        )
+                prompt
+                )
 
         data = parse_json_response(
-            response
-        )
+                response
+                )
 
         return AIInterviewReportResponse.model_validate(
-            data
-        )
+                data
+                )
 
     # =====================================================
     # Generate Skill Report
     # =====================================================
 
     def generate_skill_report(
-        self,
-        results: str,
-    ):
+            self,
+            results: str,
+            ):
 
         prompt = SKILL_ANALYSIS_PROMPT.format(
-            results=results
-        )
+                results=results
+                )
 
         response = self.ai.generate(
-            prompt
-        )
+                prompt
+                )
 
         data = parse_json_response(
-            response
-        )
+                response
+                )
 
         return AISkillReportResponse.model_validate(
-            data
-        )
+                data
+                )
 
     # =====================================================
     # Generate Learning Roadmap
     # =====================================================
 
     def generate_learning_roadmap(
-        self,
-        skill_report: str,
-    ):
+            self,
+            skill_report: str,
+            ):
 
         prompt = ROADMAP_PROMPT.format(
-            skill_report=skill_report
-        )
+                skill_report=skill_report
+                )
 
         response = self.ai.generate(
-            prompt
-        )
+                prompt
+                )
 
         data = parse_json_response(
-            response
-        )
+                response
+                )
 
         return LearningRoadmapResponse.model_validate(
-            data
-        )
+                data
+                )

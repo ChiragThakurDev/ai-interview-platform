@@ -9,6 +9,17 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.db.base import Base
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    ForeignKey,
+)
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+
+from app.db.base import Base
 
 
 class Interview(Base):
@@ -46,6 +57,15 @@ class Interview(Base):
     role = Column(
         String,
         nullable=False,
+    )
+
+    # ==========================================
+    # NEW: Company Name
+    # ==========================================
+
+    company = Column(
+        String,
+        nullable=True,
     )
 
     difficulty = Column(

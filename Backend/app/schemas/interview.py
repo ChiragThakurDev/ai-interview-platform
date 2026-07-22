@@ -3,8 +3,13 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 
+# =====================================================
+# Generate Interview
+# =====================================================
+
 class GenerateInterviewRequest(BaseModel):
     role: str
+    company: str | None = None
     difficulty: str = "medium"
     number_of_questions: int = 10
 
@@ -19,6 +24,7 @@ class InterviewResponse(BaseModel):
     resume_id: int
     title: str
     role: str
+    company: str | None = None
     difficulty: str
     created_at: datetime
 
@@ -33,6 +39,7 @@ class InterviewListResponse(BaseModel):
     resume_id: int
     title: str
     role: str
+    company: str | None = None
     difficulty: str
     created_at: datetime
 
@@ -47,7 +54,7 @@ class GenerateInterviewResponse(BaseModel):
 
 
 # =====================================================
-# Interview Session Schemas
+# Interview Session
 # =====================================================
 
 class StartInterviewResponse(BaseModel):

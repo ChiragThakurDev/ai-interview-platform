@@ -91,6 +91,7 @@ def generate_interview(
     ai_response = ai_service.generate_interview_questions(
             resume_text=resume_text,
             role=request.role,
+            company=request.company,
             difficulty=request.difficulty,
             number_of_questions=request.number_of_questions,
             )
@@ -103,9 +104,9 @@ def generate_interview(
             user_id=current_user.id,
             resume_id=resume.id,
             role=request.role,
+            company=request.company,
             difficulty=request.difficulty,
             )
-
 
     question_service = InterviewQuestionService(db)
 

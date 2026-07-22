@@ -34,10 +34,9 @@ class InterviewService:
         self.question_service = InterviewQuestionService(db)
         self.answer_service = InterviewAnswerService(db)
         self.ai_service = AIService()
-
-    # =====================================================
-    # Existing Methods
-    # =====================================================
+# =====================================================
+# Existing Methods
+# =====================================================
 
     def create_interview(
             self,
@@ -45,30 +44,38 @@ class InterviewService:
             resume_id: int,
             role: str,
             difficulty: str,
+            company: str | None = None,
             ):
+
+        title = (
+                f"{company} {role} Interview"
+                if company
+                else f"{role} Interview"
+                )
+
         interview = Interview(
                 user_id=user_id,
                 resume_id=resume_id,
-                title=f"{role} Interview",
+                title=title,
                 role=role,
+                company=company,
                 difficulty=difficulty,
                 )
 
-        return self.repository.create(interview)
-
+        return self.repository.create(interview)  
     def get_interview(
-            self,
-            interview_id: int,
-            ):
+          self,
+          interview_id: int,
+          ):
         return self.repository.get_by_id(interview_id)
 
     def get_user_interviews(
-            self,
-            user_id: int,
-            ):
+          self,
+          user_id: int,
+          ):
         return self.repository.get_by_user(user_id)
 
-    # =====================================================
+  # =====================================================
     # Interview Session
     # =====================================================
 
