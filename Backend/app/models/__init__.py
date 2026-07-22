@@ -15,3 +15,4 @@ from .skill_report import SkillReport
 
 from .chat_session import ChatSession
 from .chat_message import ChatMessage
+from app.models.roadmap import Roadmap

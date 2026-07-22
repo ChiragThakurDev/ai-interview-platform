@@ -1,6 +1,5 @@
 import logging
 
-
 from app.ai.llm import get_ai_provider
 from app.ai.parser import parse_json_response
 
@@ -10,8 +9,8 @@ from app.ai.prompts import (
     ANSWER_EVALUATION_PROMPT,
     INTERVIEW_REPORT_PROMPT,
     SKILL_ANALYSIS_PROMPT,
+    ROADMAP_PROMPT,
 )
-
 
 from app.schemas.ai import (
     ResumeAnalysisResponse,
@@ -20,25 +19,22 @@ from app.schemas.ai import (
     AISkillReportResponse,
 )
 
-
 from app.schemas.interview_report import (
     AIInterviewReportResponse,
 )
 
+from app.schemas.roadmap import (
+    LearningRoadmapResponse,
+)
 
 
 logger = logging.getLogger(__name__)
 
 
-
 class AIService:
 
-
     def __init__(self):
-
         self.ai = get_ai_provider()
-
-
 
     # =====================================================
     # Resume Analysis
@@ -53,22 +49,17 @@ class AIService:
             resume=resume_text
         )
 
-
         response = self.ai.generate(
             prompt
         )
-
 
         data = parse_json_response(
             response
         )
 
-
         return ResumeAnalysisResponse.model_validate(
             data
         )
-
-
 
     # =====================================================
     # Generate Interview Questions
@@ -89,22 +80,17 @@ class AIService:
             number_of_questions=number_of_questions,
         )
 
-
         response = self.ai.generate(
             prompt
         )
-
 
         data = parse_json_response(
             response
         )
 
-
         return AIInterviewResponse.model_validate(
             data
         )
-
-
 
     # =====================================================
     # Evaluate Interview Answer
@@ -121,22 +107,17 @@ class AIService:
             answer=answer,
         )
 
-
         response = self.ai.generate(
             prompt
         )
-
 
         data = parse_json_response(
             response
         )
 
-
         return AIAnswerEvaluationResponse.model_validate(
             data
         )
-
-
 
     # =====================================================
     # Generate Interview Report
@@ -151,22 +132,17 @@ class AIService:
             results=results
         )
 
-
         response = self.ai.generate(
             prompt
         )
-
 
         data = parse_json_response(
             response
         )
 
-
         return AIInterviewReportResponse.model_validate(
             data
         )
-
-
 
     # =====================================================
     # Generate Skill Report
@@ -181,17 +157,39 @@ class AIService:
             results=results
         )
 
-
         response = self.ai.generate(
             prompt
         )
-
 
         data = parse_json_response(
             response
         )
 
-
         return AISkillReportResponse.model_validate(
+            data
+        )
+
+    # =====================================================
+    # Generate Learning Roadmap
+    # =====================================================
+
+    def generate_learning_roadmap(
+        self,
+        skill_report: str,
+    ):
+
+        prompt = ROADMAP_PROMPT.format(
+            skill_report=skill_report
+        )
+
+        response = self.ai.generate(
+            prompt
+        )
+
+        data = parse_json_response(
+            response
+        )
+
+        return LearningRoadmapResponse.model_validate(
             data
         )
