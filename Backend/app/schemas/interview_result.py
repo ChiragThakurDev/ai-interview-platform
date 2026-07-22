@@ -1,37 +1,65 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
+
+# =====================================================
+# Question Result
+# =====================================================
 
 class QuestionResultResponse(BaseModel):
+
     id: int
     question: str
-    category: str
-    difficulty: str
+    answer: str | None
+    score: float | None
+    feedback: str | None
 
-    answer: str | None = None
-    score: int | None = None
-    feedback: str | None = None
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
 
-    class Config:
-        from_attributes = True
 
+# =====================================================
+# Interview Information
+# =====================================================
 
 class InterviewInfoResponse(BaseModel):
+
     id: int
-    title: str
     role: str
     difficulty: str
+    status: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
 
+
+# =====================================================
+# Interview Report
+# =====================================================
+
+class InterviewReportResponse(BaseModel):
+
+    overall_score: float | None
+    strengths: str | None
+    weaknesses: str | None
+    recommendations: str | None
+    summary: str | None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
+
+# =====================================================
+# Final Response
+# =====================================================
 
 class InterviewResultResponse(BaseModel):
+
     interview: InterviewInfoResponse
-
-    average_score: float
-    total_questions: int
-
     questions: list[QuestionResultResponse]
+    report: InterviewReportResponse | None

@@ -36,7 +36,7 @@ class APIKeyService:
         api_key = APIKey(
             key_hash=hashed_key,
             name=request.name,
-            permissions=request.permissions,   # NEW
+            permissions=request.permissions,
             user_id=current_user.id,
             is_active=True,
         )
@@ -48,7 +48,7 @@ class APIKeyService:
             "id": api_key.id,
             "name": api_key.name,
             "api_key": plain_api_key,
-            "permissions": api_key.permissions,   # NEW
+            "permissions": api_key.permissions,
             "is_active": api_key.is_active,
             "expires_at": api_key.expires_at,
             "created_at": api_key.created_at,
@@ -84,3 +84,21 @@ class APIKeyService:
         return {
             "message": "API Key revoked successfully."
         }
+
+    # -------------------------
+    # Get Single API Key
+    # -------------------------
+    def get_api_key(
+        self,
+        api_key_id: int,
+        current_user: User,
+    ):
+        api_key = self.repository.get_by_id(api_key_id)
+
+        if api_key is None:
+            raise ValueError("API Key not found.")
+
+        if api_key.user_id != current_user.id:
+            raise ValueError("You cannot access another user's API Key.")
+
+        return api_key
