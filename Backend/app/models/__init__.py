@@ -1,13 +1,17 @@
 from .user import User
-from app.models.user import User
-from app.models.api_key import APIKey
-from app.models.resume import Resume
-from .resume_analysis import ResumeAnalysis
-from .resume import Resume
+
 from .api_key import APIKey
+from .api_log import APILog
+
+from .resume import Resume
+from .resume_analysis import ResumeAnalysis
+
 from .interview import Interview
 from .interview_question import InterviewQuestion
 from .interview_answer import InterviewAnswer
-from app.models.interview_report import InterviewReport
-from app.models.skill_report import SkillReport
-from app.models.api_log import APILog
+from .interview_report import InterviewReport
+
+from .skill_report import SkillReport
+
+from .chat_session import ChatSession
+from .chat_message import ChatMessage

@@ -1,8 +1,4 @@
-from fastapi import (
-    APIRouter,
-    Depends,
-    Query,
-)
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.db.dependencies import get_db
@@ -10,16 +6,9 @@ from app.dependencies.auth import get_current_admin
 
 from app.models.user import User
 
-from app.services.admin_service import (
-    AdminService,
-)
-from app.schemas.admin import (
-    AdminDashboardResponse,
-    AdminUserResponse,
-    RecentActivityResponse,
-    PaginatedUsersResponse,
-    AdminAnalyticsResponse,
-)
+from app.services.admin_service import AdminService
+
+
 router = APIRouter(
     prefix="/admin",
     tags=["Admin"],
@@ -30,61 +19,56 @@ router = APIRouter(
 # Dashboard Summary
 # =====================================================
 
-@router.get(
-    "/dashboard",
-    response_model=AdminDashboardResponse,
-)
-def get_dashboard(
-    db: Session = Depends(get_db),
+@router.get("/dashboard")
+def dashboard(
     current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
 ):
-
     service = AdminService(db)
 
     return service.get_dashboard_summary()
 
 
 # =====================================================
+# Recent Activity
+# =====================================================
+
+@router.get("/activity")
+def activity(
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    service = AdminService(db)
+
+    return service.get_recent_activity()
+
+
+# =====================================================
 # Get All Users
 # =====================================================
 
-@router.get(
-    "/users",
-    response_model=list[AdminUserResponse],
-)
-def get_all_users(
-    db: Session = Depends(get_db),
+@router.get("/users")
+def users(
     current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
 ):
-
     service = AdminService(db)
 
     return service.get_all_users()
 
 
 # =====================================================
-# Search Users (Pagination)
+# Search Users
 # =====================================================
 
-@router.get(
-    "/users/search",
-    response_model=PaginatedUsersResponse,
-)
+@router.get("/users/search")
 def search_users(
-    page: int = Query(
-        1,
-        ge=1,
-    ),
-    limit: int = Query(
-        10,
-        ge=1,
-        le=100,
-    ),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
     search: str = "",
-    db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
 ):
-
     service = AdminService(db)
 
     return service.search_users(
@@ -95,118 +79,59 @@ def search_users(
 
 
 # =====================================================
-# Get Single User
-# =====================================================
-
-@router.get(
-    "/users/{user_id}",
-    response_model=AdminUserResponse,
-)
-def get_user(
-    user_id: int,
-    db: Session = Depends(get_db),
-    current_admin: User = Depends(get_current_admin),
-):
-
-    service = AdminService(db)
-
-    return service.get_user(
-        user_id
-    )
-
-
-# =====================================================
 # Activate User
 # =====================================================
 
-@router.patch(
-    "/users/{user_id}/activate",
-    response_model=AdminUserResponse,
-)
+@router.patch("/users/{user_id}/activate")
 def activate_user(
     user_id: int,
-    db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
 ):
-
     service = AdminService(db)
 
-    return service.activate_user(
-        user_id
-    )
+    return service.activate_user(user_id)
 
 
 # =====================================================
 # Deactivate User
 # =====================================================
 
-@router.patch(
-    "/users/{user_id}/deactivate",
-    response_model=AdminUserResponse,
-)
+@router.patch("/users/{user_id}/deactivate")
 def deactivate_user(
     user_id: int,
-    db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
 ):
-
     service = AdminService(db)
 
-    return service.deactivate_user(
-        user_id
-    )
+    return service.deactivate_user(user_id)
 
 
 # =====================================================
 # Delete User
 # =====================================================
 
-@router.delete(
-    "/users/{user_id}",
-)
+@router.delete("/users/{user_id}")
 def delete_user(
     user_id: int,
-    db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
 ):
-
     service = AdminService(db)
 
-    return service.delete_user(
-        user_id
-    )
+    return service.delete_user(user_id)
 
 
 # =====================================================
-# Recent Activity
+# Analytics
 # =====================================================
 
-@router.get(
-    "/activity",
-    response_model=RecentActivityResponse,
-)
-def get_recent_activity(
-    db: Session = Depends(get_db),
+@router.get("/analytics")
+def analytics(
     current_admin: User = Depends(get_current_admin),
-):
-
-    service = AdminService(db)
-
-    return service.get_recent_activity()
-
-# =====================================================
-# Admin Analytics
-# =====================================================
-
-@router.get(
-    "/analytics",
-    response_model=AdminAnalyticsResponse,
-)
-def get_analytics(
     db: Session = Depends(get_db),
-    current_admin: User = Depends(get_current_admin),
 ):
-
     service = AdminService(db)
 
     return service.get_analytics()
