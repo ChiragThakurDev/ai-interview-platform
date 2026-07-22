@@ -1,10 +1,26 @@
 from langchain_ollama import ChatOllama
 
-llm = ChatOllama(
-    model="llama3.1:8b",
-    base_url="http://host.docker.internal:11434",
-    temperature=0.3,
-)
+from app.core.config import settings
+
+
 
 def get_llm():
-    return llm
+
+    return ChatOllama(
+
+        model=settings.ollama_model,
+
+        base_url=settings.ollama_url,
+
+        temperature=0.3,
+
+    )
+
+
+
+# Backward compatibility
+# Used by AIService and older modules
+
+def get_ai_provider():
+
+    return get_llm()

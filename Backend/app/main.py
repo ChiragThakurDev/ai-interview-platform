@@ -36,6 +36,9 @@ from app.api.interview_result import (
         router as interview_result_router,
         )
 
+
+from app.api.chat import router as chat_router
+
 logger.info("Starting AI Interview Platform...")
 
 # -------------------------
@@ -74,6 +77,8 @@ app.include_router(admin_router)
 
 app.include_router(interview_result_router)
 
+
+app.include_router(chat_router)
 # -------------------------
 # ROOT
 # -------------------------

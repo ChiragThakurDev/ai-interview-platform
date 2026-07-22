@@ -1,63 +1,142 @@
-import smtplib
-from email.message import EmailMessage
+import logging
 
+from app.services.email_service import EmailService
 from app.core.config import settings
 
 
-def send_email(to_email: str, subject: str, body: str):
-    msg = EmailMessage()
-    msg["From"] = settings.smtp_email
-    msg["To"] = to_email
-    msg["Subject"] = subject
-    msg.set_content(body)
-
-    with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as smtp:
-        smtp.starttls()
-        smtp.login(settings.smtp_email, settings.smtp_password)
-        smtp.send_message(msg)
+logger = logging.getLogger(__name__)
 
 
-# -----------------------------
-# Helper 1: Verification Email
-# -----------------------------
-def send_verification_email(to_email: str, token: str):
-    link = f"http://127.0.0.1:8000/auth/verify-email?token={token}"
+# =====================================
+# Core Email Sender
+# =====================================
 
-    subject = "Verify your email"
+def send_email(
+    to_email: str,
+    subject: str,
+    body: str
+):
+
+    try:
+
+        EmailService.send_email(
+            to_email=to_email,
+            subject=subject,
+            body=body,
+        )
+
+
+        logger.info(
+            f"Email sent successfully to {to_email}"
+        )
+
+
+    except Exception as e:
+
+        logger.error(
+            f"Email sending failed to {to_email}: {str(e)}"
+        )
+
+        raise e
+
+
+
+# =====================================
+# Verification Email
+# =====================================
+
+def send_verification_email(
+    to_email: str,
+    token: str
+):
+
+
+    link = (
+        f"{settings.frontend_url}"
+        f"/verify-email?token={token}"
+    )
+
+
+    subject = (
+        f"Verify your email - {settings.app_name}"
+    )
+
+
     body = f"""
+
 Hello,
 
-Please verify your email by clicking the link below:
+Welcome to {settings.app_name}.
+
+
+Please verify your email address:
 
 {link}
 
-This link will expire soon.
+
+This verification link will expire soon.
+
 
 Thanks,
-AI Interview Platform
+{settings.app_name} Team
+
 """
 
-    send_email(to_email, subject, body)
+
+    send_email(
+        to_email,
+        subject,
+        body
+    )
 
 
-# -----------------------------
-# Helper 2: Reset Password Email
-# -----------------------------
-def send_reset_password_email(to_email: str, token: str):
-    link = f"http://127.0.0.1:8000/auth/reset-password?token={token}"
 
-    subject = "Reset your password"
+
+# =====================================
+# Reset Password Email
+# =====================================
+
+def send_reset_password_email(
+    to_email: str,
+    token: str
+):
+
+
+    link = (
+        f"{settings.frontend_url}"
+        f"/reset-password?token={token}"
+    )
+
+
+    subject = (
+        f"Password Reset - {settings.app_name}"
+    )
+
+
     body = f"""
+
 Hello,
 
-Click below to reset your password:
+
+You requested a password reset.
+
+
+Click the link below:
 
 {link}
 
-If this wasn't you, ignore this email.
+
+If you did not request this, please ignore this email.
+
 
 Thanks,
-AI Interview Platform
+{settings.app_name} Team
+
 """
 
-    send_email(to_email, subject, body)
+
+    send_email(
+        to_email,
+        subject,
+        body
+    )

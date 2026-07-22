@@ -1,10 +1,26 @@
+import logging
+
+from app.tasks.celery_app import celery
 from app.services.email_service import EmailService
 
 
-def send_welcome_email(email: str):
-    subject = "Welcome to AI Interview Preparation Platform"
+logger = logging.getLogger(__name__)
 
-    body = f"""
+
+@celery.task(
+    name="send_welcome_email"
+)
+def send_welcome_email(
+    email: str,
+):
+
+    try:
+
+        subject = (
+            "Welcome to AI Interview Preparation Platform"
+        )
+
+        body = f"""
 Hi,
 
 Welcome to the AI Interview Preparation Platform!
@@ -19,10 +35,32 @@ Regards,
 AI Interview Platform Team
 """
 
-    EmailService.send_email(
-        to_email=email,
-        subject=subject,
-        body=body,
-    )
 
-    print(f"Welcome email sent to {email}")
+        email_service = EmailService()
+
+
+        email_service.send_email(
+            to_email=email,
+            subject=subject,
+            body=body,
+        )
+
+
+        logger.info(
+            f"Welcome email sent successfully to {email}"
+        )
+
+
+        return {
+            "status": "success",
+            "email": email,
+        }
+
+
+    except Exception as e:
+
+        logger.error(
+            f"Failed to send welcome email: {str(e)}"
+        )
+
+        raise e
