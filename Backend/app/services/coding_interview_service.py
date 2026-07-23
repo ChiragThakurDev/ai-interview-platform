@@ -426,6 +426,23 @@ class CodingInterviewService:
                 "progress_percentage": progress_percentage,
                 }
 
+        # =====================================================
+# GET INTERVIEW HISTORY
+# =====================================================
+
+    def get_history(
+            self,
+            user_id: int,
+            ):
+
+        interviews = self.repository.get_user_interviews(
+                user_id
+                )
+
+        return {
+                "history": interviews
+                }
+
 
         # =====================================================
     # GENERATE CODING INTERVIEW REPORT
@@ -496,3 +513,26 @@ Feedback:
                 )
 
         return report
+
+    def get_leaderboard(self):
+
+        rows = self.repository.get_leaderboard()
+
+        return {
+                "leaderboard": [
+                    {
+                        "user_id": row.user_id,
+                        "user_name": row.user_name,
+                        "total_interviews": row.total_interviews,
+                        "best_score": row.best_score or 0,
+                        "average_score": round(
+                            float(row.average_score or 0),
+                            2,
+                            ),
+                        }
+                    for row in rows
+                    ]
+                }
+
+
+

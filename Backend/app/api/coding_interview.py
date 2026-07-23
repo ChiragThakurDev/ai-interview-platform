@@ -1,11 +1,13 @@
 from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-)
+        APIRouter,
+        Depends,
+        HTTPException,
+        )
 
 from sqlalchemy.orm import Session
-
+from app.schemas.coding_leaderboard import (
+        LeaderboardResponse,
+        )
 
 from app.db.dependencies import get_db
 
@@ -15,28 +17,29 @@ from app.models.user import User
 
 
 from app.services.coding_interview_service import (
-    CodingInterviewService,
-)
+        CodingInterviewService,
+        )
 
 
 from app.schemas.coding_interview import (
-    CreateCodingInterviewRequest,
-    CodingInterviewResponse,
-    CodingQuestionResponse,
-    CreateCodingInterviewResponse,
-    SubmitCodeRequest,
-    SubmissionResponse,
-    CodingInterviewResultResponse,
-    CodingInterviewProgressResponse,
-    CodingInterviewReportResponse,
-)
+        CreateCodingInterviewRequest,
+        CodingInterviewResponse,
+        CodingQuestionResponse,
+        CreateCodingInterviewResponse,
+        SubmitCodeRequest,
+        SubmissionResponse,
+        CodingInterviewResultResponse,
+        CodingInterviewProgressResponse,
+        CodingInterviewReportResponse,
+        CodingInterviewHistoryResponse,
+        )
 
 
 
 router = APIRouter(
-    prefix="/coding-interview",
-    tags=["Coding Interview"],
-)
+        prefix="/coding-interview",
+        tags=["Coding Interview"],
+        )
 
 
 
@@ -46,46 +49,72 @@ router = APIRouter(
 
 
 @router.post(
-    "/create",
-    response_model=CodingInterviewResponse,
-)
+        "/create",
+        response_model=CodingInterviewResponse,
+        )
 def create_coding_interview(
 
-    request: CreateCodingInterviewRequest,
+        request: CreateCodingInterviewRequest,
 
-    db: Session = Depends(get_db),
+        db: Session = Depends(get_db),
 
-    current_user: User = Depends(get_current_user),
+        current_user: User = Depends(get_current_user),
 
-):
+        ):
 
 
     service = CodingInterviewService(
-        db
-    )
+            db
+            )
 
 
     interview = service.create_interview(
 
-        user_id=current_user.id,
+            user_id=current_user.id,
 
-        role=request.role,
+            role=request.role,
 
-        company=request.company,
+            company=request.company,
 
-        language=request.language,
+            language=request.language,
 
-        difficulty=request.difficulty,
+            difficulty=request.difficulty,
 
-        number_of_questions=request.number_of_questions,
+            number_of_questions=request.number_of_questions,
 
-    )
+            )
 
 
     return interview
 
 
+@router.get(
+        "/leaderboard",
+        response_model=LeaderboardResponse,
+        )
+def get_leaderboard(
+        db: Session = Depends(get_db),
+        current_user=Depends(get_current_user),
+        ):
 
+    service = CodingInterviewService(db)
+
+    return service.get_leaderboard()
+
+@router.get(
+        "/history",
+        response_model=CodingInterviewHistoryResponse,
+        )
+def get_history(
+        db: Session = Depends(get_db),
+        current_user=Depends(get_current_user),
+        ):
+
+    service = CodingInterviewService(db)
+
+    return service.get_history(
+            current_user.id
+            )
 
 # =====================================================
 # GET CODING INTERVIEW
@@ -93,36 +122,36 @@ def create_coding_interview(
 
 
 @router.get(
-    "/{interview_id}",
-    response_model=CodingInterviewResponse,
-)
+        "/{interview_id}",
+        response_model=CodingInterviewResponse,
+        )
 def get_coding_interview(
 
-    interview_id:int,
+        interview_id:int,
 
-    db:Session = Depends(get_db),
+        db:Session = Depends(get_db),
 
-    current_user:User = Depends(get_current_user),
+        current_user:User = Depends(get_current_user),
 
-):
+        ):
 
 
     service = CodingInterviewService(
-        db
-    )
+            db
+            )
 
 
     interview = service.get_interview(
-        interview_id
-    )
+            interview_id
+            )
 
 
     if interview.user_id != current_user.id:
 
         raise HTTPException(
-            status_code=403,
-            detail="Not authorized",
-        )
+                status_code=403,
+                detail="Not authorized",
+                )
 
 
     return interview
@@ -137,41 +166,41 @@ def get_coding_interview(
 
 
 @router.get(
-    "/{interview_id}/questions",
-    response_model=list[CodingQuestionResponse],
-)
+        "/{interview_id}/questions",
+        response_model=list[CodingQuestionResponse],
+        )
 def get_questions(
 
-    interview_id:int,
+        interview_id:int,
 
-    db:Session = Depends(get_db),
+        db:Session = Depends(get_db),
 
-    current_user:User = Depends(get_current_user),
+        current_user:User = Depends(get_current_user),
 
-):
+        ):
 
 
     service = CodingInterviewService(
-        db
-    )
+            db
+            )
 
 
     interview = service.get_interview(
-        interview_id
-    )
+            interview_id
+            )
 
 
     if interview.user_id != current_user.id:
 
         raise HTTPException(
-            status_code=403,
-            detail="Not authorized",
-        )
+                status_code=403,
+                detail="Not authorized",
+                )
 
 
     return service.get_questions(
-        interview_id
-    )
+            interview_id
+            )
 
 
 
@@ -183,34 +212,34 @@ def get_questions(
 
 
 @router.post(
-    "/submit",
-    response_model=SubmissionResponse,
-)
+        "/submit",
+        response_model=SubmissionResponse,
+        )
 def submit_code(
 
-    request:SubmitCodeRequest,
+        request:SubmitCodeRequest,
 
-    db:Session = Depends(get_db),
+        db:Session = Depends(get_db),
 
-    current_user:User = Depends(get_current_user),
+        current_user:User = Depends(get_current_user),
 
-):
+        ):
 
 
     service = CodingInterviewService(
-        db
-    )
+            db
+            )
 
 
     result = service.submit_code(
 
-        question_id=request.question_id,
+            question_id=request.question_id,
 
-        language=request.language,
+            language=request.language,
 
-        code=request.code,
+            code=request.code,
 
-    )
+            )
 
 
     return result
@@ -225,74 +254,74 @@ def submit_code(
 
 
 @router.post(
-    "/{interview_id}/finish",
-    response_model=CodingInterviewResultResponse,
-)
+        "/{interview_id}/finish",
+        response_model=CodingInterviewResultResponse,
+        )
 def finish_interview(
 
-    interview_id:int,
+        interview_id:int,
 
-    db:Session = Depends(get_db),
+        db:Session = Depends(get_db),
 
-    current_user:User = Depends(get_current_user),
+        current_user:User = Depends(get_current_user),
 
-):
+        ):
 
 
     service = CodingInterviewService(
-        db
-    )
+            db
+            )
 
 
     interview = service.get_interview(
-        interview_id
-    )
+            interview_id
+            )
 
 
     if interview.user_id != current_user.id:
 
         raise HTTPException(
-            status_code=403,
-            detail="Not authorized",
-        )
+                status_code=403,
+                detail="Not authorized",
+                )
 
 
 
     return service.finish_interview(
-        interview_id
-    )
+            interview_id
+            )
 
 
 @router.get(
-    "/{interview_id}/progress",
-    response_model=CodingInterviewProgressResponse,
-)
+        "/{interview_id}/progress",
+        response_model=CodingInterviewProgressResponse,
+        )
 def get_progress(
-    interview_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
-):
+        interview_id: int,
+        db: Session = Depends(get_db),
+        current_user=Depends(get_current_user),
+        ):
 
     service = CodingInterviewService(db)
 
     return service.get_progress(
-        interview_id
-    )
+            interview_id
+            )
 
 @router.post(
-    "/{interview_id}/report",
-    response_model=CodingInterviewReportResponse,
-)
+        "/{interview_id}/report",
+        response_model=CodingInterviewReportResponse,
+        )
 def generate_coding_report(
-    interview_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
-):
+        interview_id: int,
+        db: Session = Depends(get_db),
+        current_user=Depends(get_current_user),
+        ):
 
     service = CodingInterviewService(db)
 
     return service.generate_report(
-        interview_id
-    )
+            interview_id
+            )
 
 

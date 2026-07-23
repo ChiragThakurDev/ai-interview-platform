@@ -183,3 +183,12 @@ class CodingInterviewReportResponse(BaseModel):
     recommendation: str
 
     summary: str
+
+
+# =====================================================
+# HISTORY RESPONSE
+# =====================================================
+
+class CodingInterviewHistoryResponse(BaseModel):
+
+    history: list[CodingInterviewResponse]
