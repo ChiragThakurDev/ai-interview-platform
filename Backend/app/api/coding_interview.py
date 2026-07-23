@@ -27,6 +27,8 @@ from app.schemas.coding_interview import (
     SubmitCodeRequest,
     SubmissionResponse,
     CodingInterviewResultResponse,
+    CodingInterviewProgressResponse,
+    CodingInterviewReportResponse,
 )
 
 
@@ -259,3 +261,38 @@ def finish_interview(
     return service.finish_interview(
         interview_id
     )
+
+
+@router.get(
+    "/{interview_id}/progress",
+    response_model=CodingInterviewProgressResponse,
+)
+def get_progress(
+    interview_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+
+    service = CodingInterviewService(db)
+
+    return service.get_progress(
+        interview_id
+    )
+
+@router.post(
+    "/{interview_id}/report",
+    response_model=CodingInterviewReportResponse,
+)
+def generate_coding_report(
+    interview_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+
+    service = CodingInterviewService(db)
+
+    return service.generate_report(
+        interview_id
+    )
+
+

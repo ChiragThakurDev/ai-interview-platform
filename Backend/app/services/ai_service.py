@@ -29,6 +29,7 @@ from app.schemas.roadmap import (
 from app.ai.prompts import (
         CODING_INTERVIEW_GENERATION_PROMPT,
         CODE_EVALUATION_PROMPT,
+        CODING_INTERVIEW_REPORT_PROMPT,
         )
 
 logger = logging.getLogger(__name__)
@@ -261,5 +262,29 @@ class AIService:
                 response
                 )
 
+
+        return data
+
+
+     # =====================================================
+    # Generate Coding Interview Report
+    # =====================================================
+
+    def generate_coding_report(
+            self,
+            results: str,
+            ):
+
+        prompt = CODING_INTERVIEW_REPORT_PROMPT.format(
+                results=results
+                )
+
+        response = self.ai.generate(
+                prompt
+                )
+
+        data = parse_json_response(
+                response
+                )
 
         return data

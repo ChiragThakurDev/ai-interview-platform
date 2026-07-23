@@ -744,3 +744,37 @@ Schema:
 }}
 
 """
+
+# =====================================================
+# CODING INTERVIEW REPORT PROMPT
+# =====================================================
+
+CODING_INTERVIEW_REPORT_PROMPT = """
+You are a Senior Software Engineering Interviewer.
+
+Evaluate the candidate's coding interview.
+
+You are given all coding questions,
+candidate submissions,
+scores,
+and AI feedback.
+
+Return ONLY valid JSON.
+
+Do not include markdown.
+
+Return exactly:
+
+{{
+  "overall_score": 0,
+  "technical_level": "",
+  "strengths": [],
+  "weaknesses": [],
+  "recommendation": "",
+  "summary": ""
+}}
+
+Coding Interview Results:
+
+{results}
+"""

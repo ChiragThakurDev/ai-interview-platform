@@ -352,3 +352,147 @@ class CodingInterviewService:
                 "score":interview.score,
                 "completed_at":interview.completed_at,
                 }
+
+
+
+
+    # =====================================================
+    # GET INTERVIEW PROGRESS
+    # =====================================================
+
+    def get_progress(
+            self,
+            interview_id: int,
+            ):
+
+        interview = self.get_interview(
+                interview_id
+                )
+
+        questions = interview.questions
+
+        total_questions = len(
+                questions
+                )
+
+        answered_questions = 0
+
+        total_score = 0
+
+        for question in questions:
+
+            latest_submission = (
+                    self.db.query(CodingSubmission)
+                    .filter(
+                        CodingSubmission.question_id == question.id
+                        )
+                    .order_by(
+                        CodingSubmission.submitted_at.desc()
+                        )
+                    .first()
+                    )
+
+            if latest_submission:
+
+                answered_questions += 1
+
+                total_score += (
+                        latest_submission.score or 0
+                        )
+
+        remaining_questions = (
+                total_questions - answered_questions
+                )
+
+        current_score = (
+                total_score // answered_questions
+                if answered_questions > 0
+                else 0
+                )
+
+        progress_percentage = (
+                (answered_questions * 100) // total_questions
+                if total_questions > 0
+                else 0
+                )
+
+        return {
+                "interview_id": interview.id,
+                "status": interview.status,
+                "total_questions": total_questions,
+                "answered_questions": answered_questions,
+                "remaining_questions": remaining_questions,
+                "current_score": current_score,
+                "progress_percentage": progress_percentage,
+                }
+
+
+        # =====================================================
+    # GENERATE CODING INTERVIEW REPORT
+    # =====================================================
+
+    def generate_report(
+            self,
+            interview_id: int,
+            ):
+
+        interview = self.get_interview(
+                interview_id
+                )
+
+        if not interview.questions:
+
+            raise HTTPException(
+                    status_code=400,
+                    detail="Interview has no questions.",
+                    )
+
+        results = ""
+
+        for question in interview.questions:
+
+            submission = (
+                    self.db.query(CodingSubmission)
+                    .filter(
+                        CodingSubmission.question_id == question.id
+                        )
+                    .order_by(
+                        CodingSubmission.submitted_at.desc()
+                        )
+                    .first()
+                    )
+
+            if not submission:
+                continue
+
+            results += f"""
+Question:
+    {question.title}
+
+Description:
+    {question.description}
+
+Submitted Code:
+    {submission.code}
+
+Score:
+    {submission.score}
+
+Feedback:
+    {submission.feedback}
+
+--------------------------------------
+"""
+
+        if not results.strip():
+
+            raise HTTPException(
+                    status_code=400,
+                    detail="No submissions found.",
+                    )
+
+        report = self.ai_service.generate_coding_report(
+                results
+                )
+
+        return report

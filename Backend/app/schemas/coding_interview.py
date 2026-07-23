@@ -142,3 +142,44 @@ class CodingInterviewResultResponse(BaseModel):
     score: int | None = None
 
     completed_at: datetime | None = None
+
+
+# =====================================================
+# CODING INTERVIEW PROGRESS
+# =====================================================
+
+class CodingInterviewProgressResponse(BaseModel):
+
+    interview_id: int
+
+    status: str
+
+    total_questions: int
+
+    answered_questions: int
+
+    remaining_questions: int
+
+    current_score: int
+
+    progress_percentage: int
+
+
+
+# =====================================================
+# CODING INTERVIEW REPORT
+# =====================================================
+
+class CodingInterviewReportResponse(BaseModel):
+
+    overall_score: int
+
+    technical_level: str
+
+    strengths: list[str]
+
+    weaknesses: list[str]
+
+    recommendation: str
+
+    summary: str

@@ -1,3 +1,4 @@
+from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.models.user import User
@@ -34,7 +35,7 @@ class UserService:
     def create_user(
         self,
         user_data: UserCreate,
-        background_tasks
+        background_tasks:BackgroundTasks | None =None,
     ) -> User:
 
 
@@ -86,16 +87,17 @@ class UserService:
         )
 
 
+        if background_tasks:
+            background_tasks.add_task(
 
-        background_tasks.add_task(
+              send_verification_email,
 
-            send_verification_email,
+              created_user.email,
 
-            created_user.email,
+              token
 
-            token
+            )
 
-        )
 
 
 
