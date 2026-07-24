@@ -43,6 +43,8 @@ from app.api.roadmap import router as roadmap_router
 
 from app.api.coding_interview import router as coding_interview_router
 
+from app.api.websocket import router as websocket_router
+
 logger.info("Starting AI Interview Platform...")
 
 # -------------------------
@@ -86,6 +88,9 @@ app.include_router(chat_router)
 app.include_router(roadmap_router)
 
 app.include_router(coding_interview_router)
+app.include_router(websocket_router)
+
+
 # -------------------------
 # ROOT
 # -------------------------

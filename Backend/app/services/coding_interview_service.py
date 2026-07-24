@@ -13,7 +13,7 @@ from app.repositories.coding_interview_repository import (
 
 from app.services.ai_service import AIService
 
-
+from app.utils.code_executor import CodeExecutor
 
 class CodingInterviewService:
 
@@ -211,6 +211,7 @@ class CodingInterviewService:
                     )
 
 
+        execution=CodeExecutor.execute_python(code)
 
         result = self.ai_service.evaluate_code(
 
@@ -219,6 +220,11 @@ class CodingInterviewService:
                 language=language,
 
                 code=code,
+
+                execution_output=execution["stdout"],
+
+                execution_error=execution["stderr"],
+
 
                 )
 
@@ -232,9 +238,7 @@ class CodingInterviewService:
 
                 code=code,
 
-                output=result.get(
-                    "output"
-                    ),
+                output=execution["stdout"] or execution["stderr"],
 
                 passed=result.get(
                     "passed",
@@ -258,7 +262,10 @@ class CodingInterviewService:
                 )
 
 
-        return result
+        return {
+                "execution":execution,
+                "evaluation":result,
+                }
 
 
 

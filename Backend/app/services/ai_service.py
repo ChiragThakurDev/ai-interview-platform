@@ -28,7 +28,7 @@ from app.schemas.roadmap import (
         )
 from app.ai.prompts import (
         CODING_INTERVIEW_GENERATION_PROMPT,
-        CODE_EVALUATION_PROMPT,
+        CODING_EVALUATION_PROMPT,
         CODING_INTERVIEW_REPORT_PROMPT,
         )
 
@@ -244,12 +244,16 @@ class AIService:
             question: str,
             language: str,
             code: str,
+            execution_output: str,
+            execution_error: str,
             ):
 
-        prompt = CODE_EVALUATION_PROMPT.format(
+        prompt = CODING_EVALUATION_PROMPT.format(
                 question=question,
                 language=language,
                 code=code,
+                execution_output=execution_output,
+                execution_error=execution_error,
                 )
 
 

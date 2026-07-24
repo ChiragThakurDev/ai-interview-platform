@@ -699,52 +699,66 @@ Generate problems now.
 # CODING ANSWER EVALUATION PROMPT
 # =====================================================
 
-CODE_EVALUATION_PROMPT = """
-You are a Senior Software Engineer reviewing a coding interview submission.
+CODING_EVALUATION_PROMPT = """
+You are a Senior Software Engineer conducting a technical coding interview.
 
-Evaluate the candidate code.
+Evaluate the candidate's solution based on:
 
-Problem:
-
+Question:
 {question}
 
-
 Programming Language:
-
 {language}
 
-
 Candidate Code:
-
 {code}
 
+Program Output:
+{execution_output}
 
-Evaluate:
+Runtime Error:
+{execution_error}
 
-- Correctness
-- Algorithm choice
-- Time complexity
-- Space complexity
-- Code quality
-- Edge cases
-- Best practices
+Evaluate the submission on:
 
+1. Correctness (0-10)
+2. Code Quality (0-10)
+3. Logic
+4. Time Complexity
+5. Space Complexity
+6. Readability
+7. Edge Cases
+8. Bugs
+9. Optimization Suggestions
+10. Overall Score (0-10)
+11. Passed (true/false)
+12. Overall Feedback
 
-Return ONLY valid JSON.
-
-Schema:
+Return ONLY valid JSON in this exact format:
 
 {{
-    "passed": false,
-    "score": 0,
-    "feedback": "",
-    "output": "",
-    "time_complexity": "",
-    "space_complexity": ""
+  "score": 8,
+  "passed": true,
+  "correctness": 9,
+  "code_quality": 8,
+  "time_complexity": "O(n)",
+  "space_complexity": "O(1)",
+  "strengths": [
+    "Good use of two pointers",
+    "Readable code"
+  ],
+  "weaknesses": [
+    "Variable names could be improved"
+  ],
+  "bugs": [],
+  "optimization_suggestions": [
+    "Avoid creating an extra array"
+  ],
+  "feedback": "Overall a solid solution with good understanding of the problem."
 }}
 
+Return ONLY JSON.
 """
-
 # =====================================================
 # CODING INTERVIEW REPORT PROMPT
 # =====================================================
