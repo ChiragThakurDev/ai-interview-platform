@@ -264,8 +264,8 @@ class CodingInterviewService:
         existing_submission = (
             self.db.query(CodingSubmission)
             .filter(
-                CodingSubmission.question_id == question_id
-                CodingSubmission.language==language
+                CodingSubmission.question_id == question_id,
+                CodingSubmission.language==language,
             )
             .first()
         )
