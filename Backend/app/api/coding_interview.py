@@ -32,6 +32,7 @@ from app.schemas.coding_interview import (
         CodingInterviewProgressResponse,
         CodingInterviewReportResponse,
         CodingInterviewHistoryResponse,
+        CodingDashboardResponse,
         )
 
 
@@ -115,6 +116,21 @@ def get_history(
     return service.get_history(
             current_user.id
             )
+
+@router.get(
+    "/dashboard",
+    response_model=CodingDashboardResponse,
+)
+def get_dashboard(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+
+    service = CodingInterviewService(db)
+
+    return service.get_dashboard(
+        current_user.id
+    )
 
 # =====================================================
 # GET CODING INTERVIEW

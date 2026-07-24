@@ -192,3 +192,35 @@ class CodingInterviewReportResponse(BaseModel):
 class CodingInterviewHistoryResponse(BaseModel):
 
     history: list[CodingInterviewResponse]
+
+
+# =====================================================
+# DASHBOARD RESPONSE
+# =====================================================
+
+class DashboardLatestInterview(BaseModel):
+
+    id: int
+    role: str
+    company: str | None = None
+    score: int | None = None
+    status: str
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
+
+class CodingDashboardResponse(BaseModel):
+
+    total_interviews: int
+    completed_interviews: int
+    pending_interviews: int
+    average_score: int
+    best_score: int
+    total_questions: int
+    total_submissions: int
+    passed_submissions: int
+    success_rate: int
+    latest_interview: DashboardLatestInterview | None
+

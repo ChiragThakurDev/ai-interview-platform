@@ -443,6 +443,82 @@ class CodingInterviewService:
                 "history": interviews
                 }
 
+# =====================================================
+# DASHBOARD
+# =====================================================
+
+    def get_dashboard(
+            self,
+            user_id: int,
+            ):
+
+        interviews = self.repository.get_user_interviews(
+                user_id
+                )
+
+        total_interviews = len(interviews)
+
+        completed_interviews = sum(
+                1
+                for interview in interviews
+                if interview.status == "completed"
+                )
+
+        pending_interviews = total_interviews - completed_interviews
+
+        completed_scores = [
+                interview.score
+                for interview in interviews
+                if interview.score is not None
+                ]
+
+        average_score = (
+                sum(completed_scores) // len(completed_scores)
+                if completed_scores
+                else 0
+                )
+
+        best_score = max(completed_scores) if completed_scores else 0
+
+        total_questions = 0
+        total_submissions = 0
+        passed_submissions = 0
+
+        for interview in interviews:
+
+            total_questions += len(interview.questions)
+
+            for question in interview.questions:
+
+               total_submissions += len(question.submissions)
+
+               passed_submissions += sum(
+                     1
+                     for submission in question.submissions
+                     if submission.passed
+                     )
+
+        success_rate = (
+                (passed_submissions * 100) // total_submissions
+                if total_submissions
+                else 0
+                )
+
+        latest = interviews[0] if interviews else None
+
+        return {
+                "total_interviews": total_interviews,
+                "completed_interviews": completed_interviews,
+                "pending_interviews": pending_interviews,
+                "average_score": average_score,
+                "best_score": best_score,
+                "total_questions": total_questions,
+                "total_submissions": total_submissions,
+                "passed_submissions": passed_submissions,
+                "success_rate": success_rate,
+                "latest_interview": latest,
+                }
+
 
         # =====================================================
     # GENERATE CODING INTERVIEW REPORT
