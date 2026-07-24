@@ -20,3 +20,6 @@ from app.models.roadmap import Roadmap
 from app.models.coding_interview import CodingInterview
 from app.models.coding_question import CodingQuestion
 from app.models.coding_submission import CodingSubmission
+
+from app.models.coding_draft import CodingDraft
+

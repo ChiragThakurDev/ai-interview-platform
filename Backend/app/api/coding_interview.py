@@ -35,7 +35,9 @@ from app.schemas.coding_interview import (
         CodingDashboardResponse,
         )
 
-
+from app.schemas.coding_draft import (
+    CodingDraftResponse,
+)
 
 router = APIRouter(
         prefix="/coding-interview",
@@ -340,4 +342,32 @@ def generate_coding_report(
             interview_id
             )
 
+
+# =====================================================
+# GET SAVED DRAFT
+# =====================================================
+
+@router.get(
+        "/draft/{question_id}",
+        response_model=CodingDraftResponse | None,
+)
+def get_draft(
+
+        question_id: int,
+
+        db: Session = Depends(get_db),
+
+        current_user: User = Depends(get_current_user),
+
+):
+
+    service = CodingInterviewService(
+            db
+            )
+
+
+    return service.get_draft(
+            user_id=current_user.id,
+            question_id=question_id,
+            )
 
