@@ -1,16 +1,20 @@
 import os
-import tempfile
 import subprocess
+import tempfile
 
 
 class CodeExecutor:
 
     @staticmethod
-    def execute_python(code: str):
+    def execute_python(
+        code: str,
+        input_data: str = "",
+    ):
 
         temp_path = None
 
         try:
+
             with tempfile.NamedTemporaryFile(
                 suffix=".py",
                 delete=False,
@@ -22,6 +26,7 @@ class CodeExecutor:
 
             result = subprocess.run(
                 ["python3", temp_path],
+                input=input_data,
                 capture_output=True,
                 text=True,
                 timeout=5,

@@ -664,36 +664,71 @@ Programming Language:
 Difficulty:
 {difficulty}
 
-
 STRICT OUTPUT RULES:
 
-- Output ONLY JSON.
+- Output ONLY valid JSON.
 - Do NOT use markdown.
 - Do NOT add explanations.
 - Do NOT add ```json blocks.
-- The first character must be {{
-- The last character must be }}
+- The first character must be {
+- The last character must be }
 - The JSON key must be exactly "questions".
-- The value of questions must be an array.
-
+- Every question MUST include test_cases.
 
 Required JSON format:
 
-{{
+{
   "questions": [
-    {{
+    {
       "title": "Problem title",
       "description": "Problem description",
       "starter_code": "Starter code",
-      "solution": "Expected solution approach",
-      "difficulty": "easy|medium|hard"
-    }}
+      "solution": "Expected solution",
+      "difficulty": "easy",
+      "test_cases": [
+        {
+          "input": "hello",
+          "expected_output": "olleh",
+          "hidden": false
+        },
+        {
+          "input": "ChatGPT",
+          "expected_output": "TPGtahC",
+          "hidden": false
+        },
+        {
+          "input": "",
+          "expected_output": "",
+          "hidden": true
+        },
+        {
+          "input": "a",
+          "expected_output": "a",
+          "hidden": true
+        },
+        {
+          "input": "OpenAI",
+          "expected_output": "IAnepO",
+          "hidden": false
+        }
+      ]
+    }
   ]
-}}
+}
 
-Generate problems now.
+Rules:
+
+- Generate exactly {number_of_questions} questions.
+- Every question must include at least 5 test cases.
+- At least 2 test cases must have hidden=true.
+- Include normal cases.
+- Include edge cases.
+- Include empty input where applicable.
+- Include large input where applicable.
+- Include starter code.
+- Include an optimal solution.
+- Return ONLY JSON.
 """
-
 
 # =====================================================
 # CODING ANSWER EVALUATION PROMPT

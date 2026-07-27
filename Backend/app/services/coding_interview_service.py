@@ -7,6 +7,8 @@ from app.models.coding_interview import CodingInterview
 from app.models.coding_question import CodingQuestion
 from app.models.coding_submission import CodingSubmission
 
+from app.models.coding_test_case import CodingTestCase
+
 from app.repositories.coding_interview_repository import (
     CodingInterviewRepository,
 )
@@ -17,9 +19,9 @@ from app.repositories.coding_draft_repository import (
 
 from app.services.ai_service import AIService
 
-from app.utils.code_executor import CodeExecutor
+#from app.utils.code_executor import CodeExecutor
 
-
+from app.services.code_evaluation_service import CodeEvaluationService
 
 class CodingInterviewService:
 
@@ -40,8 +42,8 @@ class CodingInterviewService:
         )
 
         self.ai_service = AIService()
-
-
+        self.code_evaluation_service = CodeEvaluationService()
+ 
 
     # =====================================================
     # CREATE CODING INTERVIEW
@@ -125,10 +127,27 @@ class CodingInterviewService:
 
             )
 
-
-            self.repository.create_question(
+            question=self.repository.create_question(
                 question
             )
+
+            for test_case in item.get("test_cases",[]):
+
+                tc=CodingTestCase(
+                        question_id=question.id,
+                        input_data=test_case["input"],
+
+                        expected_output=test_case["expected_output"],
+
+                        is_hidden=test_case.get(
+                            "is_hidden",
+                            False,
+                            ),
+                )
+
+                self.db.add(tc)
+
+                
 
 
 
@@ -278,15 +297,24 @@ class CodingInterviewService:
             detail="Question already submitted"
             )
 
+        test_cases = question.test_cases
+
+        evaluation = self.code_evaluation_service.evaluate(
+             question=question,
+             language=language,
+             code=code,
+             test_cases=test_cases,
+        )
+
 
 
         # ==============================
         # EXECUTE CODE
         # ==============================
 
-        execution = CodeExecutor.execute_python(
-            code
-        )
+       # execution = CodeExecutor.execute_python(
+       #     code
+       # )
 
 
 
@@ -294,19 +322,19 @@ class CodingInterviewService:
         # AI EVALUATION
         # ==============================
 
-        result = self.ai_service.evaluate_code(
+        #result = self.ai_service.evaluate_code(
 
-            question=question.description,
+        #    question=question.description,
 
-            language=language,
+         #   language=language,
 
-            code=code,
+          #  code=code,
 
-            execution_output=execution["stdout"],
+           # execution_output=execution["stdout"],
 
-            execution_error=execution["stderr"],
+            #execution_error=execution["stderr"],
 
-        )
+        #)
 
 
 
@@ -322,28 +350,14 @@ class CodingInterviewService:
 
             code=code,
 
-            output=(
-                execution["stdout"]
-                or
-                execution["stderr"]
-            ),
+            output=evaluation["results"],
 
-            passed=result.get(
-                "passed",
-                False
-            ),
+            passed=evaluation["passed"],
 
-            score=result.get(
-                "score",
-                0
-            ),
+            score=evaluation["score"],
 
-            feedback=result.get(
-                "feedback"
-            ),
-
+            feedback=evaluation["feedback"],
         )
-
 
         self.repository.create_submission(
             submission
@@ -475,10 +489,7 @@ class CodingInterviewService:
         return {
 
 
-            "execution": execution,
-
-
-            "evaluation": result,
+            "evaluation": evaluation,
 
 
             "completed": completed,
