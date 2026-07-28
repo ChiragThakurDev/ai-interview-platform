@@ -22,7 +22,6 @@ class CreateCodingInterviewRequest(BaseModel):
 
 
 
-
 # =====================================================
 # Coding Question Response
 # =====================================================
@@ -39,12 +38,12 @@ class CodingQuestionResponse(BaseModel):
 
     difficulty: str
 
+    function_name: str | None = None
+
 
     model_config = ConfigDict(
-        from_attributes=True,
+        from_attributes=True
     )
-
-
 
 
 
@@ -74,10 +73,8 @@ class CodingInterviewResponse(BaseModel):
 
 
     model_config = ConfigDict(
-        from_attributes=True,
+        from_attributes=True
     )
-
-
 
 
 
@@ -93,13 +90,13 @@ class CreateCodingInterviewResponse(BaseModel):
 
 
 
-
-
 # =====================================================
 # Submit Code Request
 # =====================================================
 
 class SubmitCodeRequest(BaseModel):
+
+    interview_id: int
 
     question_id: int
 
@@ -109,6 +106,50 @@ class SubmitCodeRequest(BaseModel):
 
 
 
+# =====================================================
+# Execution Response
+# =====================================================
+
+class ExecutionResponse(BaseModel):
+
+    success: bool
+
+    stdout: str
+
+    stderr: str
+
+    return_code: int
+
+
+
+# =====================================================
+# Evaluation Response
+# =====================================================
+
+class EvaluationResponse(BaseModel):
+
+    passed: bool
+
+    score: int
+
+    correctness: int
+
+    code_quality: int
+
+    time_complexity: str
+
+    space_complexity: str
+
+    strengths: list[str]
+
+    weaknesses: list[str]
+
+    bugs: list[str]
+
+    optimization_suggestions: list[str]
+
+    feedback: str
+
 
 
 # =====================================================
@@ -117,15 +158,13 @@ class SubmitCodeRequest(BaseModel):
 
 class SubmissionResponse(BaseModel):
 
-    passed: bool
+    evaluation: EvaluationResponse
 
-    score: int
+    completed: bool
 
-    feedback: str | None = None
+    score: int | None = None
 
-    output: str | None = None
-
-
+    next_question: dict | None = None
 
 
 
@@ -144,8 +183,9 @@ class CodingInterviewResultResponse(BaseModel):
     completed_at: datetime | None = None
 
 
+
 # =====================================================
-# CODING INTERVIEW PROGRESS
+# Coding Interview Progress
 # =====================================================
 
 class CodingInterviewProgressResponse(BaseModel):
@@ -167,7 +207,7 @@ class CodingInterviewProgressResponse(BaseModel):
 
 
 # =====================================================
-# CODING INTERVIEW REPORT
+# Coding Interview Report
 # =====================================================
 
 class CodingInterviewReportResponse(BaseModel):
@@ -185,8 +225,9 @@ class CodingInterviewReportResponse(BaseModel):
     summary: str
 
 
+
 # =====================================================
-# HISTORY RESPONSE
+# History Response
 # =====================================================
 
 class CodingInterviewHistoryResponse(BaseModel):
@@ -194,58 +235,48 @@ class CodingInterviewHistoryResponse(BaseModel):
     history: list[CodingInterviewResponse]
 
 
+
 # =====================================================
-# DASHBOARD RESPONSE
+# Dashboard Response
 # =====================================================
 
 class DashboardLatestInterview(BaseModel):
 
     id: int
+
     role: str
+
     company: str | None = None
+
     score: int | None = None
+
     status: str
 
+
     model_config = ConfigDict(
-        from_attributes=True,
+        from_attributes=True
     )
+
 
 
 class CodingDashboardResponse(BaseModel):
 
     total_interviews: int
+
     completed_interviews: int
+
     pending_interviews: int
+
     average_score: int
+
     best_score: int
+
     total_questions: int
+
     total_submissions: int
+
     passed_submissions: int
+
     success_rate: int
+
     latest_interview: DashboardLatestInterview | None
-
-
-class ExecutionResponse(BaseModel):
-    success: bool
-    stdout: str
-    stderr: str
-    return_code: int
-
-
-class EvaluationResponse(BaseModel):
-    passed: bool
-    score: int
-    correctness: int
-    code_quality: int
-    time_complexity: str
-    space_complexity: str
-    strengths: list[str]
-    weaknesses: list[str]
-    bugs: list[str]
-    optimization_suggestions: list[str]
-    feedback: str
-
-
-class SubmissionResponse(BaseModel):
-    execution: ExecutionResponse
-    evaluation: EvaluationResponse

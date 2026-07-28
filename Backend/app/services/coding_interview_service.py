@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-
+import json
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -10,14 +10,16 @@ from app.models.coding_submission import CodingSubmission
 from app.models.coding_test_case import CodingTestCase
 
 from app.repositories.coding_interview_repository import (
-    CodingInterviewRepository,
-)
+        CodingInterviewRepository,
+        )
 
 from app.repositories.coding_draft_repository import (
-    CodingDraftRepository,
-)
+        CodingDraftRepository,
+        )
 
 from app.services.ai_service import AIService
+
+from app.models.coding_test_case import CodingTestCase
 
 #from app.utils.code_executor import CodeExecutor
 
@@ -27,80 +29,80 @@ class CodingInterviewService:
 
 
     def __init__(
-        self,
-        db: Session
-    ):
+            self,
+            db: Session
+            ):
 
         self.db = db
 
         self.repository = CodingInterviewRepository(
-            db
-        )
+                db
+                )
 
         self.draft_repository = CodingDraftRepository(
-            db
-        )
+                db
+                )
 
         self.ai_service = AIService()
         self.code_evaluation_service = CodeEvaluationService()
- 
+
 
     # =====================================================
     # CREATE CODING INTERVIEW
     # =====================================================
 
     def create_interview(
-        self,
-        user_id: int,
-        role: str,
-        company: str | None,
-        language: str,
-        difficulty: str,
-        number_of_questions: int,
-    ):
+            self,
+            user_id: int,
+            role: str,
+            company: str | None,
+            language: str,
+            difficulty: str,
+            number_of_questions: int,
+            ):
 
 
         interview = CodingInterview(
 
-            user_id=user_id,
+                user_id=user_id,
 
-            role=role,
+                role=role,
 
-            company=company,
+                company=company,
 
-            language=language,
+                language=language,
 
-            difficulty=difficulty,
+                difficulty=difficulty,
 
-            status="pending",
+                status="pending",
 
-        )
+                )
 
 
         interview = self.repository.create(
-            interview
-        )
+                interview
+                )
 
 
         ai_response = self.ai_service.generate_coding_questions(
 
-            role=role,
+                role=role,
 
-            company=company,
+                company=company,
 
-            language=language,
+                language=language,
 
-            difficulty=difficulty,
+                difficulty=difficulty,
 
-            number_of_questions=number_of_questions,
+                number_of_questions=number_of_questions,
 
-        )
+                )
 
 
         print(
-            "AI RESPONSE:",
-            ai_response
-        )
+                "AI RESPONSE:",
+                ai_response
+                )
 
 
 
@@ -109,45 +111,64 @@ class CodingInterviewService:
 
             question = CodingQuestion(
 
-                coding_interview_id=interview.id,
+                    coding_interview_id=interview.id,
 
-                title=item["title"],
+                    title=item["title"],
 
-                description=item["description"],
+                    description=item["description"],
 
-                starter_code=item.get(
-                    "starter_code"
-                ),
+                    starter_code=item.get(
+                        "starter_code"
+                        ),
 
-                solution=item.get(
-                    "solution"
-                ),
+                    solution=item.get(
+                        "solution"
+                        ),
 
-                difficulty=item["difficulty"],
+                    difficulty=item["difficulty"],
 
-            )
+                    function_name=item.get("function_name"),
+
+                    )
 
             question=self.repository.create_question(
-                question
-            )
+                    question
+                    )
+
 
             for test_case in item.get("test_cases",[]):
 
+                input_data=test_case.get(
+                        "input"
+                        )
+
+                expected_output=test_case.get(
+                        "expected_output"
+                        )
+
                 tc=CodingTestCase(
                         question_id=question.id,
-                        input_data=test_case["input"],
+                        input_data=json.dumps(input_data)
 
-                        expected_output=test_case["expected_output"],
+                        if isinstance(input_data,(list,dict))
+                        else str(input_data),
+
+                        expected_output=json.dumps(expected_output)
+
+                        if isinstance(expected_output,(list,dict))
+                        else str(expected_output),
+
+
 
                         is_hidden=test_case.get(
-                            "is_hidden",
+                            "hidden",
                             False,
                             ),
-                )
+                        )
 
                 self.db.add(tc)
 
-                
+
 
 
 
@@ -155,16 +176,16 @@ class CodingInterviewService:
 
 
         interview.started_at = datetime.now(
-            timezone.utc
-        )
+                timezone.utc
+                )
 
 
         self.db.commit()
 
 
         self.db.refresh(
-            interview
-        )
+                interview
+                )
 
 
         return interview
@@ -178,22 +199,22 @@ class CodingInterviewService:
 
 
     def get_interview(
-        self,
-        interview_id:int
-    ):
+            self,
+            interview_id:int
+            ):
 
 
         interview = self.repository.get_by_id(
-            interview_id
-        )
+                interview_id
+                )
 
 
         if not interview:
 
             raise HTTPException(
-                status_code=404,
-                detail="Coding interview not found"
-            )
+                    status_code=404,
+                    detail="Coding interview not found"
+                    )
 
 
         return interview
@@ -207,14 +228,81 @@ class CodingInterviewService:
 
 
     def get_questions(
-        self,
-        interview_id:int
-    ):
+            self,
+            interview_id:int
+            ):
 
 
         return self.repository.get_questions(
-            interview_id
-        )
+                interview_id
+                )
+
+
+    # =====================================================
+    # GET SUBMISSIONS
+    # =====================================================
+
+    def get_submissions(
+            self,
+            interview_id: int,
+            ):
+
+        interview = self.get_interview(
+                interview_id
+                )
+
+
+        submissions = (
+
+                self.db.query(
+                    CodingSubmission
+                    )
+
+                .join(
+                    CodingQuestion,
+                    CodingSubmission.question_id == CodingQuestion.id
+                    )
+
+                .filter(
+                    CodingQuestion.coding_interview_id == interview_id
+                    )
+
+                .order_by(
+                    CodingSubmission.submitted_at.desc()
+                    )
+
+                .all()
+
+                )
+
+
+        return [
+
+                {
+
+                    "question_id": submission.question_id,
+
+                    "language": submission.language,
+
+                    "code": submission.code,
+
+                    "output": submission.output,
+
+                    "passed": submission.passed,
+
+                    "score": submission.score,
+
+                    "feedback": submission.feedback,
+
+                    "submitted_at": submission.submitted_at,
+
+                    }
+
+                for submission in submissions
+
+                ]
+
+
 
 
 
@@ -223,12 +311,12 @@ class CodingInterviewService:
     # =====================================================
 
     def submit_code(
-        self,
-        interview_id: int,
-        question_id: int,
-        language: str,
-        code: str,
-    ):
+            self,
+            interview_id: int,
+            question_id: int,
+            language: str,
+            code: str,
+            ):
 
 
         # ==============================
@@ -236,20 +324,20 @@ class CodingInterviewService:
         # ==============================
 
         interview = (
-            self.db.query(CodingInterview)
-            .filter(
-                CodingInterview.id == interview_id
-            )
-            .first()
-        )
+                self.db.query(CodingInterview)
+                .filter(
+                    CodingInterview.id == interview_id
+                    )
+                .first()
+                )
 
 
         if not interview:
 
             raise HTTPException(
-                status_code=404,
-                detail="Interview not found",
-            )
+                    status_code=404,
+                    detail="Interview not found",
+                    )
 
 
 
@@ -258,21 +346,21 @@ class CodingInterviewService:
         # ==============================
 
         question = (
-            self.db.query(CodingQuestion)
-            .filter(
-                CodingQuestion.id == question_id,
-                CodingQuestion.coding_interview_id == interview_id
-            )
-            .first()
-        )
+                self.db.query(CodingQuestion)
+                .filter(
+                    CodingQuestion.id == question_id,
+                    CodingQuestion.coding_interview_id == interview_id
+                    )
+                .first()
+                )
 
 
         if not question:
 
             raise HTTPException(
-                status_code=404,
-                detail="Question not found for this interview",
-            )
+                    status_code=404,
+                    detail="Question not found for this interview",
+                    )
 
 
 
@@ -281,30 +369,30 @@ class CodingInterviewService:
         # ==============================
 
         existing_submission = (
-            self.db.query(CodingSubmission)
-            .filter(
-                CodingSubmission.question_id == question_id,
-                CodingSubmission.language==language,
-            )
-            .first()
-        )
+                self.db.query(CodingSubmission)
+                .filter(
+                    CodingSubmission.question_id == question_id,
+                    CodingSubmission.language==language,
+                    )
+                .first()
+                )
 
 
         if existing_submission:
 
             raise HTTPException(
-            status_code=400,
-            detail="Question already submitted"
-            )
+                    status_code=400,
+                    detail="Question already submitted"
+                    )
 
         test_cases = question.test_cases
 
         evaluation = self.code_evaluation_service.evaluate(
-             question=question,
-             language=language,
-             code=code,
-             test_cases=test_cases,
-        )
+                question=question,
+                language=language,
+                code=code,
+                test_cases=test_cases,
+                )
 
 
 
@@ -344,24 +432,24 @@ class CodingInterviewService:
 
         submission = CodingSubmission(
 
-            question_id=question_id,
+                question_id=question_id,
 
-            language=language,
+                language=language,
 
-            code=code,
+                code=code,
 
-            output=evaluation["results"],
+                output=evaluation,
 
-            passed=evaluation["passed"],
+                passed=evaluation["passed"],
 
-            score=evaluation["score"],
+                score=evaluation["score"],
 
-            feedback=evaluation["feedback"],
-        )
+                feedback=evaluation["feedback"],
+                )
 
         self.repository.create_submission(
-            submission
-        )
+                submission
+                )
 
 
 
@@ -373,21 +461,20 @@ class CodingInterviewService:
         if not existing_submission:
 
             interview.answered_questions += 1
-            interview.current_question += 1
 
 
 
         total_questions = len(
-            interview.questions
-        )
+                interview.questions
+                )
 
 
 
         completed = (
-            interview.answered_questions
-            >=
-            total_questions
-        )
+                interview.answered_questions
+                >=
+                total_questions
+                )
 
 
 
@@ -406,8 +493,8 @@ class CodingInterviewService:
 
 
             interview.completed_at = datetime.now(
-                timezone.utc
-            )
+                    timezone.utc
+                    )
 
 
             scores = []
@@ -418,38 +505,38 @@ class CodingInterviewService:
 
                 latest = (
 
-                    self.db.query(
-                        CodingSubmission
-                    )
+                        self.db.query(
+                            CodingSubmission
+                            )
 
-                    .filter(
-                        CodingSubmission.question_id == q.id
-                    )
+                        .filter(
+                            CodingSubmission.question_id == q.id
+                            )
 
-                    .order_by(
-                        CodingSubmission.submitted_at.desc()
-                    )
+                        .order_by(
+                            CodingSubmission.submitted_at.desc()
+                            )
 
-                    .first()
+                        .first()
 
-                )
+                        )
 
 
                 if latest:
 
                     scores.append(
-                        latest.score or 0
-                    )
+                            latest.score or 0
+                            )
 
 
 
             if scores:
 
                 interview.score = (
-                    sum(scores)
-                    //
-                    len(scores)
-                )
+                        sum(scores)
+                        //
+                        len(scores)
+                        )
 
 
 
@@ -458,65 +545,54 @@ class CodingInterviewService:
         # ==============================
 
         else:
+               interview.current_question+=1
 
-           next_q = interview.questions[
-           interview.current_question
-           ]
+               next_q = interview.questions[
+                  interview.current_question
+               ]
 
-
-           next_question = {
-
-              "id": next_q.id,
-
-             "title": next_q.title,
-
-             "description": next_q.description,
-
-             "difficulty": next_q.difficulty,
-
-            }
 
 
         self.db.commit()
 
 
         self.db.refresh(
-            interview
-        )
+                interview
+                )
 
 
 
         return {
 
 
-            "evaluation": evaluation,
+                "evaluation": evaluation,
 
 
-            "completed": completed,
+                "completed": completed,
 
 
-            "score": interview.score,
+                "score": interview.score,
 
 
-            "next_question": next_question,
+                "next_question": next_question,
 
 
-        }
-        
-        
+                }
+
+
     # =====================================================
     # COMPLETE INTERVIEW
     # =====================================================
 
     def finish_interview(
-        self,
-        interview_id: int,
-    ):
+            self,
+            interview_id: int,
+            ):
 
 
         interview = self.get_interview(
-            interview_id
-        )
+                interview_id
+                )
 
 
         questions = interview.questions
@@ -525,9 +601,9 @@ class CodingInterviewService:
         if not questions:
 
             raise HTTPException(
-                status_code=400,
-                detail="No questions found",
-            )
+                    status_code=400,
+                    detail="No questions found",
+                    )
 
 
 
@@ -541,21 +617,21 @@ class CodingInterviewService:
 
             submission = (
 
-                self.db.query(
-                    CodingSubmission
-                )
+                    self.db.query(
+                        CodingSubmission
+                        )
 
-                .filter(
-                    CodingSubmission.question_id == question.id
-                )
+                    .filter(
+                        CodingSubmission.question_id == question.id
+                        )
 
-                .order_by(
-                    CodingSubmission.submitted_at.desc()
-                )
+                    .order_by(
+                        CodingSubmission.submitted_at.desc()
+                        )
 
-                .first()
+                    .first()
 
-            )
+                    )
 
 
             if submission:
@@ -563,53 +639,53 @@ class CodingInterviewService:
                 answered_questions += 1
 
                 total_score += (
-                    submission.score or 0
-                )
+                        submission.score or 0
+                        )
 
 
 
         if answered_questions < len(questions):
 
             raise HTTPException(
-                status_code=400,
-                detail="Answer all questions before completing interview",
-            )
+                    status_code=400,
+                    detail="Answer all questions before completing interview",
+                    )
 
 
 
         interview.score = (
-            total_score // len(questions)
-        )
+                total_score // len(questions)
+                )
 
 
         interview.status = "completed"
 
 
         interview.completed_at = datetime.now(
-            timezone.utc
-        )
+                timezone.utc
+                )
 
 
         self.db.commit()
 
 
         self.db.refresh(
-            interview
-        )
+                interview
+                )
 
 
 
         return {
 
-            "interview_id": interview.id,
+                "interview_id": interview.id,
 
-            "status": interview.status,
+                "status": interview.status,
 
-            "score": interview.score,
+                "score": interview.score,
 
-            "completed_at": interview.completed_at,
+                "completed_at": interview.completed_at,
 
-        }
+                }
 
 
 
@@ -619,19 +695,19 @@ class CodingInterviewService:
     # =====================================================
 
     def get_progress(
-        self,
-        interview_id:int,
-    ):
+            self,
+            interview_id:int,
+            ):
 
 
         interview = self.get_interview(
-            interview_id
-        )
+                interview_id
+                )
 
 
         total_questions = len(
-            interview.questions
-        )
+                interview.questions
+                )
 
 
         answered_questions = 0
@@ -645,21 +721,21 @@ class CodingInterviewService:
 
             submission = (
 
-                self.db.query(
-                    CodingSubmission
-                )
+                    self.db.query(
+                        CodingSubmission
+                        )
 
-                .filter(
-                    CodingSubmission.question_id == question.id
-                )
+                    .filter(
+                        CodingSubmission.question_id == question.id
+                        )
 
-                .order_by(
-                    CodingSubmission.submitted_at.desc()
-                )
+                    .order_by(
+                        CodingSubmission.submitted_at.desc()
+                        )
 
-                .first()
+                    .first()
 
-            )
+                    )
 
 
             if submission:
@@ -667,39 +743,39 @@ class CodingInterviewService:
                 answered_questions += 1
 
                 total_score += (
-                    submission.score or 0
-                )
+                        submission.score or 0
+                        )
 
 
 
         return {
 
-            "interview_id": interview.id,
+                "interview_id": interview.id,
 
-            "status": interview.status,
+                "status": interview.status,
 
-            "total_questions": total_questions,
+                "total_questions": total_questions,
 
-            "answered_questions": answered_questions,
+                "answered_questions": answered_questions,
 
-            "remaining_questions":
+                "remaining_questions":
                 total_questions - answered_questions,
 
-            "current_score":
+                "current_score":
                 (
                     total_score // answered_questions
                     if answered_questions
                     else 0
-                ),
+                    ),
 
-            "progress_percentage":
+                "progress_percentage":
                 (
                     answered_questions * 100 // total_questions
                     if total_questions
                     else 0
-                ),
+                    ),
 
-        }
+                }
 
 
 
@@ -709,21 +785,21 @@ class CodingInterviewService:
     # =====================================================
 
     def get_history(
-        self,
-        user_id:int,
-    ):
+            self,
+            user_id:int,
+            ):
 
 
         interviews = self.repository.get_user_interviews(
-            user_id
-        )
+                user_id
+                )
 
 
         return {
 
-            "history": interviews
+                "history": interviews
 
-        }
+                }
 
 
 
@@ -733,74 +809,74 @@ class CodingInterviewService:
     # =====================================================
 
     def get_dashboard(
-        self,
-        user_id:int,
-    ):
+            self,
+            user_id:int,
+            ):
 
 
         interviews = self.repository.get_user_interviews(
-            user_id
-        )
+                user_id
+                )
 
 
         total_interviews = len(
-            interviews
-        )
+                interviews
+                )
 
 
         completed_interviews = sum(
 
-            1
+                1
 
-            for interview in interviews
+                for interview in interviews
 
-            if interview.status == "completed"
+                if interview.status == "completed"
 
-        )
+                )
 
 
         scores = [
 
-            interview.score
+                interview.score
 
-            for interview in interviews
+                for interview in interviews
 
-            if interview.score is not None
+                if interview.score is not None
 
-        ]
+                ]
 
 
 
         return {
 
 
-            "total_interviews":
+                "total_interviews":
                 total_interviews,
 
 
-            "completed_interviews":
+                "completed_interviews":
                 completed_interviews,
 
 
-            "pending_interviews":
+                "pending_interviews":
                 total_interviews - completed_interviews,
 
 
-            "average_score":
+                "average_score":
                 (
                     sum(scores)//len(scores)
                     if scores
                     else 0
-                ),
+                    ),
 
 
-            "best_score":
+                "best_score":
                 max(scores)
                 if scores
                 else 0,
 
 
-        }
+                }
 
 
 
@@ -810,14 +886,14 @@ class CodingInterviewService:
     # =====================================================
 
     def generate_report(
-        self,
-        interview_id:int,
-    ):
+            self,
+            interview_id:int,
+            ):
 
 
         interview = self.get_interview(
-            interview_id
-        )
+                interview_id
+                )
 
 
         result_text = ""
@@ -829,21 +905,21 @@ class CodingInterviewService:
 
             submission = (
 
-                self.db.query(
-                    CodingSubmission
-                )
+                    self.db.query(
+                        CodingSubmission
+                        )
 
-                .filter(
-                    CodingSubmission.question_id == question.id
-                )
+                    .filter(
+                        CodingSubmission.question_id == question.id
+                        )
 
-                .order_by(
-                    CodingSubmission.submitted_at.desc()
-                )
+                    .order_by(
+                        CodingSubmission.submitted_at.desc()
+                        )
 
-                .first()
+                    .first()
 
-            )
+                    )
 
 
             if not submission:
@@ -855,23 +931,23 @@ class CodingInterviewService:
             result_text += f"""
 
 Question:
-{question.title}
+    {question.title}
 
 
 Description:
-{question.description}
+    {question.description}
 
 
 Code:
-{submission.code}
+    {submission.code}
 
 
 Score:
-{submission.score}
+    {submission.score}
 
 
 Feedback:
-{submission.feedback}
+    {submission.feedback}
 
 ----------------------------
 
@@ -883,15 +959,15 @@ Feedback:
 
 
             raise HTTPException(
-                status_code=400,
-                detail="No submissions found",
-            )
+                    status_code=400,
+                    detail="No submissions found",
+                    )
 
 
 
         return self.ai_service.generate_coding_report(
-            result_text
-        )
+                result_text
+                )
 
 
 
@@ -901,8 +977,8 @@ Feedback:
     # =====================================================
 
     def get_leaderboard(
-        self
-    ):
+            self
+            ):
 
 
         rows = self.repository.get_leaderboard()
@@ -912,41 +988,41 @@ Feedback:
         return {
 
 
-            "leaderboard":[
+                "leaderboard":[
 
 
-                {
+                    {
 
 
-                    "user_id": row.user_id,
+                        "user_id": row.user_id,
 
 
-                    "user_name": row.user_name,
+                        "user_name": row.user_name,
 
 
-                    "total_interviews":
+                        "total_interviews":
                         row.total_interviews,
 
 
-                    "best_score":
+                        "best_score":
                         row.best_score or 0,
 
 
-                    "average_score":
+                        "average_score":
                         round(
                             float(row.average_score or 0),
                             2
-                        ),
+                            ),
+
+                        }
+
+
+                    for row in rows
+
+
+                    ]
 
                 }
-
-
-                for row in rows
-
-
-            ]
-
-        }
 
 
 
@@ -956,25 +1032,25 @@ Feedback:
     # =====================================================
 
     def save_draft(
-        self,
-        user_id:int,
-        question_id:int,
-        language:str,
-        code:str,
-    ):
+            self,
+            user_id:int,
+            question_id:int,
+            language:str,
+            code:str,
+            ):
 
 
         return self.draft_repository.save_draft(
 
-            user_id=user_id,
+                user_id=user_id,
 
-            question_id=question_id,
+                question_id=question_id,
 
-            language=language,
+                language=language,
 
-            code=code,
+                code=code,
 
-        )
+                )
 
 
 
@@ -984,16 +1060,16 @@ Feedback:
     # =====================================================
 
     def get_draft(
-        self,
-        user_id:int,
-        question_id:int,
-    ):
+            self,
+            user_id:int,
+            question_id:int,
+            ):
 
 
         return self.draft_repository.get_draft(
 
-            user_id=user_id,
+                user_id=user_id,
 
-            question_id=question_id,
+                question_id=question_id,
 
-        )
+                )

@@ -486,7 +486,7 @@ Do not use markdown.
 
 Schema:
 
-{
+{{
     "summary": "",
     "bugs": [],
     "security_issues": [],
@@ -494,11 +494,11 @@ Schema:
     "code_quality_issues": [],
     "suggestions": [],
     "optimized_solution": "",
-    "complexity": {
+    "complexity": {{
         "time": "",
         "space": ""
-    }
-}
+    }}
+}}
 
 
 Programming Language:
@@ -524,13 +524,13 @@ Return ONLY valid JSON.
 
 Schema:
 
-{
+{{
     "error_type": "",
     "root_cause": "",
     "explanation": "",
     "fix_steps": [],
     "corrected_code": ""
-}
+}}
 
 
 Error:
@@ -574,12 +574,12 @@ Rules:
 
 Return JSON only:
 
-{
+{{
     "question": "",
     "difficulty": "",
     "topic": "",
     "expected_concepts": []
-}
+}}
 """
 
 # =====================================================
@@ -625,7 +625,7 @@ Return ONLY JSON.
 
 Schema:
 
-{
+{{
     "project_quality": 0,
     "architecture_score": 0,
     "strengths": [],
@@ -634,14 +634,13 @@ Schema:
     "scalability_concerns": [],
     "resume_description": "",
     "interview_talking_points": []
-}
+}}
 
 
 Project:
 
 {project}
 """
-
 
 # =====================================================
 # CODING INTERVIEW GENERATION PROMPT
@@ -664,72 +663,158 @@ Programming Language:
 Difficulty:
 {difficulty}
 
-STRICT OUTPUT RULES:
+=====================================================
+STRICT OUTPUT RULES
+=====================================================
 
-- Output ONLY valid JSON.
-- Do NOT use markdown.
-- Do NOT add explanations.
-- Do NOT add ```json blocks.
-- The first character must be {
-- The last character must be }
-- The JSON key must be exactly "questions".
+- Return ONLY valid JSON.
+- Do NOT return markdown.
+- Do NOT use ```json.
+- Do NOT explain anything.
+- The first character MUST be {{
+- The last character MUST be }}
+- The root key MUST be "questions".
+- Every question MUST include all required fields.
 - Every question MUST include test_cases.
+- Do NOT omit any field.
 
-Required JSON format:
+=====================================================
+REQUIRED JSON SCHEMA
+=====================================================
 
-{
+{{
   "questions": [
-    {
-      "title": "Problem title",
-      "description": "Problem description",
-      "starter_code": "Starter code",
-      "solution": "Expected solution",
-      "difficulty": "easy",
+    {{
+      "title": "",
+      "description": "",
+      "function_name": "",
+      "starter_code": "",
+      "solution": "",
+      "difficulty": "easy|medium|hard",
       "test_cases": [
-        {
-          "input": "hello",
-          "expected_output": "olleh",
-          "hidden": false
-        },
-        {
-          "input": "ChatGPT",
-          "expected_output": "TPGtahC",
-          "hidden": false
-        },
-        {
+        {{
           "input": "",
           "expected_output": "",
-          "hidden": true
-        },
-        {
-          "input": "a",
-          "expected_output": "a",
-          "hidden": true
-        },
-        {
-          "input": "OpenAI",
-          "expected_output": "IAnepO",
           "hidden": false
-        }
+        }}
       ]
-    }
+    }}
   ]
-}
+}}
 
-Rules:
+=====================================================
+RULES
+=====================================================
 
 - Generate exactly {number_of_questions} questions.
-- Every question must include at least 5 test cases.
-- At least 2 test cases must have hidden=true.
-- Include normal cases.
-- Include edge cases.
-- Include empty input where applicable.
-- Include large input where applicable.
-- Include starter code.
-- Include an optimal solution.
-- Return ONLY JSON.
-"""
+- Questions must be realistic coding interview problems.
+- Do NOT generate theory questions.
+- Every question must have exactly one main function.
+- The function_name MUST exactly match the function in starter_code and solution.
+- Function names must use snake_case.
+- The solution must be optimal.
+- The solution must compile.
+- The starter_code must compile.
+- Never leave a function declaration without a body.
+- Every function in starter_code MUST contain a "pass" statement.
+- Do NOT include the solution inside starter_code.
+- Test cases must match the function signature exactly.
+- Do NOT generate duplicate questions.
 
+=====================================================
+TEST CASE RULES
+=====================================================
+
+- Every question must contain at least 5 test cases.
+- At least 2 test cases must have "hidden": true.
+- Include:
+  - Normal cases
+  - Edge cases
+  - Boundary cases
+  - Empty input where applicable
+  - Large input where applicable
+- expected_output must be exactly correct.
+
+=====================================================
+STARTER CODE RULES
+=====================================================
+
+The starter code MUST be executable.
+
+Correct example:
+
+def reverse_string(s):
+    # Write your code here
+    pass
+
+Correct example:
+
+def two_sum(nums):
+    # Write your code here
+    pass
+
+Correct example:
+
+class Node:
+    def __init__(self, x):
+        self.val = x
+        self.next = None
+
+def reverse_linked_list(head):
+    # Write your code here
+    pass
+
+INCORRECT (Never generate this):
+
+def reverse_string(s):
+
+INCORRECT (Never generate this):
+
+def reverse_linked_list(head):
+
+=====================================================
+SOLUTION RULES
+=====================================================
+
+- The solution must be complete.
+- The solution must compile.
+- The solution must use the same function_name.
+- The solution must return the correct output.
+- The solution must be optimal for the given difficulty.
+
+=====================================================
+FUNCTION NAME RULES
+=====================================================
+
+The value of "function_name" MUST exactly match the implemented function.
+
+Example:
+
+function_name:
+"reverse_string"
+
+starter_code:
+
+def reverse_string(s):
+    pass
+
+solution:
+
+def reverse_string(s):
+    return s[::-1]
+
+=====================================================
+RETURN
+=====================================================
+
+Return ONLY valid JSON.
+
+No markdown.
+
+No explanation.
+
+No extra text.
+"""
 # =====================================================
 # CODING ANSWER EVALUATION PROMPT
 # =====================================================

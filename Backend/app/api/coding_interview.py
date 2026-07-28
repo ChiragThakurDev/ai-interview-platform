@@ -221,7 +221,45 @@ def get_questions(
             )
 
 
+# =====================================================
+# GET SUBMISSIONS
+# =====================================================
 
+@router.get(
+    "/{interview_id}/submissions"
+)
+def get_submissions(
+
+        interview_id: int,
+
+        db: Session = Depends(get_db),
+
+        current_user: User = Depends(get_current_user),
+
+):
+
+
+    service = CodingInterviewService(
+            db
+            )
+
+
+    interview = service.get_interview(
+            interview_id
+            )
+
+
+    if interview.user_id != current_user.id:
+
+        raise HTTPException(
+                status_code=403,
+                detail="Not authorized",
+                )
+
+
+    return service.get_submissions(
+            interview_id
+            )
 
 
 # =====================================================
@@ -232,38 +270,58 @@ def get_questions(
 @router.post(
         "/submit",
         response_model=SubmissionResponse,
-        )
+)
 def submit_code(
 
-        request:SubmitCodeRequest,
+        request: SubmitCodeRequest,
 
-        db:Session = Depends(get_db),
+        db: Session = Depends(get_db),
 
-        current_user:User = Depends(get_current_user),
+        current_user: User = Depends(get_current_user),
 
-        ):
+):
 
 
     service = CodingInterviewService(
-            db
-            )
+        db
+    )
 
+
+    # ==========================================
+    # CHECK INTERVIEW OWNERSHIP
+    # ==========================================
+
+    interview = service.get_interview(
+        request.interview_id
+    )
+
+
+    if interview.user_id != current_user.id:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized",
+        )
+
+
+    # ==========================================
+    # SUBMIT CODE
+    # ==========================================
 
     result = service.submit_code(
 
-            question_id=request.question_id,
+        interview_id=request.interview_id,
 
-            language=request.language,
+        question_id=request.question_id,
 
-            code=request.code,
+        language=request.language,
 
-            )
+        code=request.code,
+
+    )
 
 
     return result
-
-
-
 
 
 # =====================================================

@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 def parse_json_response(
     response: str | None,
 ) -> dict[str, Any]:
+
     """
     Safely convert LLM response into JSON.
 
@@ -31,17 +32,16 @@ def parse_json_response(
         }
 
 
-    # Remove markdown formatting
-
     cleaned_response = (
         response
         .replace("```json", "")
+        .replace("```JSON", "")
         .replace("```", "")
         .strip()
     )
 
 
-    # Try direct JSON parsing
+    # Direct JSON parsing
 
     try:
 
@@ -53,36 +53,31 @@ def parse_json_response(
     except json.JSONDecodeError:
 
         logger.warning(
-            "Direct JSON parsing failed. Trying extraction..."
+            "Direct JSON parsing failed. Extracting JSON..."
         )
 
 
-    # Extract JSON object from text
+    # Safer JSON extraction
 
     try:
 
+        decoder = json.JSONDecoder()
+
         start = cleaned_response.index("{")
 
-        end = (
-            cleaned_response.rindex("}")
-            + 1
+        json_object, _ = decoder.raw_decode(
+            cleaned_response[start:]
         )
 
-        json_text = cleaned_response[start:end]
-
-
-        return json.loads(
-            json_text
-        )
+        return json_object
 
 
     except Exception as error:
 
         logger.error(
-            "Failed to parse AI JSON response: %s",
+            "Failed parsing LLM JSON: %s",
             error,
         )
-
 
         return {
             "error": "Invalid AI response",

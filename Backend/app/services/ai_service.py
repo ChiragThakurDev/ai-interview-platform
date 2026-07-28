@@ -224,12 +224,21 @@ class AIService:
         response = self.ai.generate(
                 prompt
                 )
+        print("=" * 80)
+        print("RAW AI RESPONSE")
+        print("=" * 80)
+        print(response)
 
 
         data = parse_json_response(
                 response
                 )
 
+        print("=" * 80 )
+        print("PARSED AI RESPONSE:")
+        print("=" * 80)
+        print(data)
+        print(type(data))
 
         return data
 
