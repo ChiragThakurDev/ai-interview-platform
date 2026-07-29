@@ -1,0 +1,153 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ── Dark mode (default) ─────────────────────────────── */
+  :root,
+  html.dark {
+    --bg-base:       #1a1a1a;
+    --bg-card:       #282828;
+    --bg-raised:     #333333;
+    --bg-muted:      #3d3d3d;
+    --bg-hover:      #3a3a3a;
+    --border:        #3d3d3d;
+    --border-subtle: #2e2e2e;
+    --text-primary:  #eff2f599;
+    --text-main:     #eff2f5;
+    --text-secondary:#8d9199;
+    --text-muted:    #5c6370;
+    --brand:         #f89f1b;
+    --brand-hover:   #ffb641;
+    --scroll-track:  #1a1a1a;
+    --scroll-thumb:  #3d3d3d;
+  }
+
+  /* ── Light mode ──────────────────────────────────────── */
+  html.light {
+    --bg-base:       #f9fafb;
+    --bg-card:       #ffffff;
+    --bg-raised:     #f3f4f6;
+    --bg-muted:      #e5e7eb;
+    --bg-hover:      #f3f4f6;
+    --border:        #e5e7eb;
+    --border-subtle: #f3f4f6;
+    --text-primary:  #1f2937;
+    --text-main:     #111827;
+    --text-secondary:#4b5563;
+    --text-muted:    #9ca3af;
+    --brand:         #f89f1b;
+    --brand-hover:   #ea580c;
+    --scroll-track:  #f3f4f6;
+    --scroll-thumb:  #d1d5db;
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ── Scrollbars ──────────────────────────────────────── */
+  ::-webkit-scrollbar              { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track        { background: var(--scroll-track); }
+  ::-webkit-scrollbar-thumb        { background: var(--scroll-thumb); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover  { background: #5c6370; }
+
+  /* ── Selection ───────────────────────────────────────── */
+  ::selection { background: rgba(248, 159, 27, 0.25); color: inherit; }
+
+  /* ── Focus ───────────────────────────────────────────── */
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+}
+
+/* ─── Reusable Component Utilities ──────────────────────────────── */
+@layer components {
+  /* Base card surface */
+  .card-base {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+  }
+
+  /* Hover lift */
+  .hover-lift {
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .hover-lift:hover {
+    background: var(--bg-hover);
+    border-color: #5c6370;
+    transform: translateY(-1px);
+  }
+
+  /* Sidebar nav active indicator */
+  .nav-active-bar {
+    position: relative;
+  }
+  .nav-active-bar::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    bottom: 20%;
+    width: 3px;
+    background: var(--brand);
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* Monaco editor theming */
+  .monaco-editor,
+  .monaco-editor-background,
+  .monaco-editor .margin {
+    background-color: var(--bg-base) !important;
+  }
+
+  /* Autofill fix */
+  input:-webkit-autofill,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-raised) inset !important;
+    -webkit-text-fill-color: var(--text-main) !important;
+    caret-color: var(--text-main) !important;
+  }
+}
+
+@layer utilities {
+  /* Hide number spin buttons */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] { -moz-appearance: textfield; }
+
+  .text-main     { color: var(--text-main); }
+  .text-sec      { color: var(--text-secondary); }
+  .text-muted    { color: var(--text-muted); }
+  .bg-card       { background: var(--bg-card); }
+  .bg-raised     { background: var(--bg-raised); }
+  .border-sub    { border-color: var(--border); }
+}
