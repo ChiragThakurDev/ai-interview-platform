@@ -7,18 +7,14 @@ from sqlalchemy import (
 )
 
 from sqlalchemy.orm import relationship
-
 from sqlalchemy.sql import func
 
 from app.db.base import Base
 
 
-
 class CodingInterview(Base):
 
     __tablename__ = "coding_interviews"
-
-
 
     # =====================================================
     # PRIMARY KEY
@@ -29,8 +25,6 @@ class CodingInterview(Base):
         primary_key=True,
         index=True,
     )
-
-
 
     # =====================================================
     # USER
@@ -45,8 +39,6 @@ class CodingInterview(Base):
         nullable=False,
     )
 
-
-
     # =====================================================
     # INTERVIEW DETAILS
     # =====================================================
@@ -56,12 +48,10 @@ class CodingInterview(Base):
         nullable=False,
     )
 
-
     company = Column(
         String,
         nullable=True,
     )
-
 
     language = Column(
         String,
@@ -70,13 +60,10 @@ class CodingInterview(Base):
         server_default="python",
     )
 
-
     difficulty = Column(
         String,
         nullable=False,
     )
-
-
 
     # =====================================================
     # STATUS
@@ -89,8 +76,6 @@ class CodingInterview(Base):
         server_default="pending",
     )
 
-
-
     # =====================================================
     # SCORE
     # =====================================================
@@ -99,8 +84,6 @@ class CodingInterview(Base):
         Integer,
         nullable=True,
     )
-
-
 
     # =====================================================
     # INTERVIEW PROGRESS
@@ -113,15 +96,12 @@ class CodingInterview(Base):
         server_default="0",
     )
 
-
     answered_questions = Column(
         Integer,
         nullable=False,
         default=0,
         server_default="0",
     )
-
-
 
     # =====================================================
     # TIMESTAMPS
@@ -132,19 +112,15 @@ class CodingInterview(Base):
         nullable=True,
     )
 
-
     completed_at = Column(
         DateTime(timezone=True),
         nullable=True,
     )
 
-
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
     )
-
-
 
     # =====================================================
     # RELATIONSHIPS
@@ -155,12 +131,14 @@ class CodingInterview(Base):
         back_populates="coding_interviews",
     )
 
-
-
     questions = relationship(
         "CodingQuestion",
-
         back_populates="coding_interview",
+        cascade="all, delete-orphan",
+    )
 
+    submissions = relationship(
+        "CodingSubmission",
+        back_populates="interview",
         cascade="all, delete-orphan",
     )

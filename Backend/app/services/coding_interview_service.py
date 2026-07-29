@@ -371,8 +371,8 @@ class CodingInterviewService:
         existing_submission = (
                 self.db.query(CodingSubmission)
                 .filter(
+                    CodingSubmission.interview_id == interview_id,
                     CodingSubmission.question_id == question_id,
-                    CodingSubmission.language==language,
                     )
                 .first()
                 )
@@ -432,6 +432,8 @@ class CodingInterviewService:
 
         submission = CodingSubmission(
 
+                interview_id=interview_id,
+
                 question_id=question_id,
 
                 language=language,
@@ -478,7 +480,7 @@ class CodingInterviewService:
 
 
 
-        next_question = None
+        next_question =None
 
 
 
@@ -532,11 +534,7 @@ class CodingInterviewService:
 
             if scores:
 
-                interview.score = (
-                        sum(scores)
-                        //
-                        len(scores)
-                        )
+                interview.score = round(sum(scores)/len(scores),2)
 
 
 
@@ -547,18 +545,39 @@ class CodingInterviewService:
         else:
                interview.current_question+=1
 
-               next_q = interview.questions[
-                  interview.current_question
-               ]
+               if interview.current_question < len(interview.questions):
+
+                         q = interview.questions[
+                           interview.current_question
+                         ]
+               
+
+                         next_question={
+                                 "id":q.id,
+                                 "title":q.title,
+                                 "description":q.description,
+                                 "starter_code":q.starter_code,
+                                 "difficulty":q.difficulty,
+                                 "function_name":q.function_name,
+                         }
+
+        try:
 
 
 
-        self.db.commit()
+            self.db.commit()
 
 
-        self.db.refresh(
+            self.db.refresh(
                 interview
                 )
+
+
+        except Exception:
+            self.db.rollback()
+
+            raise
+        
 
 
 
