@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
@@ -56,6 +57,25 @@ app = FastAPI(
 )
 
 app.add_middleware(LoggingMiddleware)
+
+# -------------------------
+# CORS
+# -------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        settings.frontend_url,       # http://localhost:3000
+        "http://127.0.0.1:3000",
+        "http://localhost:3000",
+        "http://localhost:3001",      # Frontend running on 3001
+        "http://127.0.0.1:3001",
+        "http://localhost:5173",      # Vite default port
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # -------------------------
 # EXCEPTION HANDLERS
 # -------------------------

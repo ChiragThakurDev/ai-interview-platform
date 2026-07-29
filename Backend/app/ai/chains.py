@@ -6,7 +6,7 @@ from langchain_core.messages import (
     SystemMessage,
 )
 
-from app.ai.llm import get_llm
+from app.ai.llm import get_chat_llm
 from app.ai.prompts import CHAT_SYSTEM_PROMPT
 
 
@@ -37,7 +37,7 @@ def chat_chain(
 
     try:
 
-        llm = get_llm()
+        llm = get_chat_llm()
 
 
         langchain_messages = [
