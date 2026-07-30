@@ -18,6 +18,54 @@ class CodeEvaluationService:
         results = []
         passed_tests = 0
 
+        # =====================================================
+        # NON-PYTHON: STATIC AI EVALUATION
+        # =====================================================
+        # The Docker container does not ship with heavy compilers (g++, javac).
+        # We rely on the highly capable coding model to statically grade the
+        # logic and correctness of non-Python submissions.
+        if language.lower() not in ["python", "python3"]:
+            question_context = f"Title: {question.title}\nDesc: {question.description}\nTest Cases:\n"
+            for t in test_cases:
+                question_context += f"Input: {t.input_data} -> Expected: {t.expected_output}\n"
+
+            ai_result = self.ai_service.evaluate_code(
+                question=question_context,
+                language=language,
+                code=code,
+                execution_output="Skipped local execution (Language not supported locally). Evaluate correctness statically.",
+                execution_error="None",
+            )
+
+            # Ensure AI result conforms to expected dictionary structure
+            if not isinstance(ai_result, dict):
+                ai_result = {}
+
+            # Score is 0-10 in prompt, but we scale it to 0-100 to match DB schema
+            ai_score = ai_result.get("score", 0)
+            if ai_score <= 10:
+                ai_score = int(ai_score * 10)
+
+            return {
+                "passed": ai_result.get("passed", False),
+                "score": ai_score,
+                "correctness": ai_result.get("correctness", ai_score),
+                "code_quality": ai_result.get("code_quality", ai_score),
+                "time_complexity": ai_result.get("time_complexity", "Unknown"),
+                "space_complexity": ai_result.get("space_complexity", "Unknown"),
+                "strengths": ai_result.get("strengths", []),
+                "weaknesses": ai_result.get("weaknesses", []),
+                "bugs": ai_result.get("bugs", []),
+                "optimization_suggestions": ai_result.get("optimization_suggestions", []),
+                "feedback": ai_result.get("feedback", "Code was evaluated successfully."),
+                "passed_tests": 0,
+                "total_tests": len(test_cases),
+                "results": [],
+            }
+
+        # =====================================================
+        # PYTHON: LOCAL SANDBOX EXECUTION
+        # =====================================================
         for test_case in test_cases:
 
             execution = CodeExecutor.execute_python(
@@ -48,17 +96,8 @@ class CodeEvaluationService:
             )
 
         total_tests = len(test_cases)
-
-        overall_passed = (
-            total_tests > 0
-            and passed_tests == total_tests
-        )
-
-        score = (
-            int((passed_tests / total_tests) * 100)
-            if total_tests
-            else 0
-        )
+        overall_passed = (total_tests > 0 and passed_tests == total_tests)
+        score = int((passed_tests / total_tests) * 100) if total_tests else 0
 
         feedback = (
             "All test cases passed. Excellent solution."
@@ -66,44 +105,25 @@ class CodeEvaluationService:
             else f"Passed {passed_tests}/{total_tests} test cases. Improve your solution."
         )
 
-        # Simple heuristic values until AI evaluation is added
-        correctness = score
-        code_quality = score
-
-        if score == 100:
-            time_complexity = "Optimal"
-            space_complexity = "Optimal"
-        else:
-            time_complexity = "Unknown"
-            space_complexity = "Unknown"
-
-        strengths = []
-        weaknesses = []
+        strengths = ["All test cases passed", "Correct output produced"] if overall_passed else []
+        weaknesses = ["Failed one or more test cases"] if not overall_passed else []
         bugs = []
         optimization_suggestions = []
 
-        if overall_passed:
-            strengths.append("All test cases passed")
-            strengths.append("Correct output produced")
-        else:
-            weaknesses.append("Failed one or more test cases")
-
+        if not overall_passed:
             for result in results:
                 if result["stderr"]:
                     bugs.append(result["stderr"])
                     break
-
-            optimization_suggestions.append(
-                "Handle all edge cases and ensure the function returns the expected output."
-            )
+            optimization_suggestions.append("Handle all edge cases and ensure the function returns the expected output.")
 
         return {
             "passed": overall_passed,
             "score": score,
-            "correctness": correctness,
-            "code_quality": code_quality,
-            "time_complexity": time_complexity,
-            "space_complexity": space_complexity,
+            "correctness": score,
+            "code_quality": score,
+            "time_complexity": "Optimal" if score == 100 else "Unknown",
+            "space_complexity": "Optimal" if score == 100 else "Unknown",
             "strengths": strengths,
             "weaknesses": weaknesses,
             "bugs": bugs,

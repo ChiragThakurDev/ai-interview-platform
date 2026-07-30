@@ -31,7 +31,7 @@ export const InterviewSetupPage = () => {
     defaultValues: {
       resumeId: defaultResumeId,
       difficulty: 'medium',
-      number_of_questions: 10,
+      number_of_questions: 3,
     },
   })
 

@@ -709,14 +709,14 @@ RULES
 - Generate exactly {number_of_questions} questions.
 - Questions must be realistic coding interview problems.
 - Do NOT generate theory questions.
+- The `starter_code` and `solution` MUST be written entirely in {language}.
 - Every question must have exactly one main function.
 - The function_name MUST exactly match the function in starter_code and solution.
-- Function names must use snake_case.
+- Function names must use snake_case or camelCase depending on {language} conventions.
 - The solution must be optimal.
-- The solution must compile.
-- The starter_code must compile.
-- Never leave a function declaration without a body.
-- Every function in starter_code MUST contain a "pass" statement.
+- The solution must compile in {language}.
+- The starter_code must compile in {language}.
+- Never leave a function declaration without a body. Use a placeholder like "return 0;" or "pass".
 - Do NOT include the solution inside starter_code.
 - Test cases must match the function signature exactly.
 - Do NOT generate duplicate questions.
@@ -725,58 +725,48 @@ RULES
 TEST CASE RULES
 =====================================================
 
-- Every question must contain at least 5 test cases.
-- At least 2 test cases must have "hidden": true.
+- Every question must contain at least 2 test cases.
+- At least 1 test case must have "hidden": true.
 - Include:
   - Normal cases
-  - Edge cases
-  - Boundary cases
-  - Empty input where applicable
-  - Large input where applicable
+  - Edge cases (if possible)
 - expected_output must be exactly correct.
 
 =====================================================
 STARTER CODE RULES
 =====================================================
 
-The starter code MUST be executable.
+The starter code MUST be valid, executable code in {language}.
 
-Correct example:
-
+Example (if {language} is Python):
 def reverse_string(s):
-    # Write your code here
     pass
 
-Correct example:
+Example (if {language} is C++):
+class Solution {{
+public:
+    string reverseString(string s) {{
+        // Write your code here
+        return "";
+    }}
+}};
 
-def two_sum(nums):
-    # Write your code here
-    pass
+Example (if {language} is Java):
+class Solution {{
+    public String reverseString(String s) {{
+        // Write your code here
+        return "";
+    }}
+}}
 
-Correct example:
-
-class Node:
-    def __init__(self, x):
-        self.val = x
-        self.next = None
-
-def reverse_linked_list(head):
-    # Write your code here
-    pass
-
-INCORRECT (Never generate this):
-
+INCORRECT (Never generate this in any language):
 def reverse_string(s):
-
-INCORRECT (Never generate this):
-
-def reverse_linked_list(head):
 
 =====================================================
 SOLUTION RULES
 =====================================================
 
-- The solution must be complete.
+- The solution must be complete, written entirely in {language}.
 - The solution must compile.
 - The solution must use the same function_name.
 - The solution must return the correct output.
@@ -786,22 +776,27 @@ SOLUTION RULES
 FUNCTION NAME RULES
 =====================================================
 
-The value of "function_name" MUST exactly match the implemented function.
+The value of "function_name" MUST exactly match the implemented function name in both the starter_code and solution.
 
 Example:
+function_name: "reverseString"
 
-function_name:
-"reverse_string"
+starter_code (C++):
+class Solution {{
+public:
+    string reverseString(string s) {{
+        return "";
+    }}
+}};
 
-starter_code:
-
-def reverse_string(s):
-    pass
-
-solution:
-
-def reverse_string(s):
-    return s[::-1]
+solution (C++):
+class Solution {{
+public:
+    string reverseString(string s) {{
+        reverse(s.begin(), s.end());
+        return s;
+    }}
+}};
 
 =====================================================
 RETURN
@@ -897,13 +892,17 @@ Return ONLY valid JSON.
 
 Do not include markdown.
 
+RULES:
+- `strengths` MUST be a list of strings (NOT objects).
+- `weaknesses` MUST be a list of strings (NOT objects).
+
 Return exactly:
 
 {{
   "overall_score": 0,
   "technical_level": "",
-  "strengths": [],
-  "weaknesses": [],
+  "strengths": ["string", "string"],
+  "weaknesses": ["string", "string"],
   "recommendation": "",
   "summary": ""
 }}

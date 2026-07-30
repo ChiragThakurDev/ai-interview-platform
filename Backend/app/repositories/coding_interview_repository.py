@@ -100,19 +100,17 @@ class CodingInterviewRepository:
                     func.max(CodingInterview.score).label("best_score"),
                     func.avg(CodingInterview.score).label("average_score"),
                     )
-                .join(
+                .outerjoin(
                     CodingInterview,
-                    CodingInterview.user_id == User.id,
-                    )
-                .filter(
-                    CodingInterview.status == "completed"
+                    (CodingInterview.user_id == User.id) & (CodingInterview.status == "completed")
                     )
                 .group_by(
                     User.id,
                     User.name,
                     )
                 .order_by(
-                    func.avg(CodingInterview.score).desc()
+                    func.max(CodingInterview.score).desc().nulls_last(),
+                    func.avg(CodingInterview.score).desc().nulls_last()
                     )
                 .all()
                 )

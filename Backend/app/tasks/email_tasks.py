@@ -1,15 +1,9 @@
 import logging
 
-from app.tasks.celery_app import celery
 from app.services.email_service import EmailService
 
 
 logger = logging.getLogger(__name__)
-
-
-@celery.task(
-    name="send_welcome_email"
-)
 def send_welcome_email(
     email: str,
 ):

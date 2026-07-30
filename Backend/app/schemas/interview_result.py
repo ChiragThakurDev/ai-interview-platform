@@ -62,4 +62,4 @@ class InterviewResultResponse(BaseModel):
 
     interview: InterviewInfoResponse
     questions: list[QuestionResultResponse]
-    report: InterviewReportResponse | None
+    report: InterviewReportResponse | None = None

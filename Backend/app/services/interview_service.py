@@ -339,6 +339,7 @@ class InterviewService:
                 average_score=average_score,
                 total_questions=len(interview.questions),
                 questions=question_results,
+                report=InterviewReportResponse.model_validate(interview.report) if interview.report else None
                 )
 
     def delete_interview(

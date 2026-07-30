@@ -38,7 +38,7 @@ export const CodingSetupPage = () => {
     defaultValues: {
       language: 'python',
       difficulty: 'medium',
-      number_of_questions: 5,
+      number_of_questions: 2,
     },
   })
 
