@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageSquare, Plus, Send, Trash2, Mic, MicOff,
@@ -19,12 +19,30 @@ const QUICK_PROMPTS = [
   { icon: Brain,    label: 'Resume Tips',     prompt: 'What key achievements should I highlight for a Senior Full Stack Engineer role?' },
 ]
 
+const TypewriterText = ({ text }: { text: string }) => {
+  const [displayed, setDisplayed] = useState('')
+
+  useEffect(() => {
+    let i = 0
+    setDisplayed('')
+    const timer = setInterval(() => {
+      setDisplayed(text.substring(0, i + 5)) // typing chunks of 5 chars for speed
+      i += 5
+      if (i >= text.length) clearInterval(timer)
+    }, 15)
+    return () => clearInterval(timer)
+  }, [text])
+
+  return <p className="whitespace-pre-wrap">{displayed}</p>
+}
+
 export const ChatPage = () => {
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null)
   const [inputMessage, setInputMessage] = useState('')
   const [isListening, setIsListening] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [optimisticMessage, setOptimisticMessage] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -44,10 +62,15 @@ export const ChatPage = () => {
     }
   }, [sessions, activeSessionId])
 
+  // Clear optimistic message when new messages arrive
+  useEffect(() => {
+    setOptimisticMessage(null)
+  }, [messages])
+
   // Scroll to bottom when messages change or AI is thinking
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, sendingMsg])
+  }, [messages, sendingMsg, optimisticMessage])
 
   const selectSession = (id: number) => {
     setActiveSessionId(id)
@@ -66,24 +89,27 @@ export const ChatPage = () => {
     if (!text || sendingMsg) return
 
     if (!activeSessionId) {
+      setOptimisticMessage(text)
+      setInputMessage('')
       createSession({ title: text.slice(0, 40) }, {
         onSuccess: (s) => {
           setActiveSessionId(s.id)
           sendMsg({ sessionId: s.id, body: { message: text } }, {
-            onError: () => showToast('error', 'Failed to send message'),
+            onError: () => { setOptimisticMessage(null); showToast('error', 'Failed to send message') },
           })
         },
-        onError: () => showToast('error', 'Failed to create chat session'),
+        onError: () => { setOptimisticMessage(null); showToast('error', 'Failed to create chat session') },
       })
-      setInputMessage('')
       return
     }
 
+    setOptimisticMessage(text)
     setInputMessage('')
     sendMsg({ sessionId: activeSessionId, body: { message: text } }, {
       onError: () => {
         showToast('error', 'Failed to send message')
         setInputMessage(text)
+        setOptimisticMessage(null)
       },
     })
   }
@@ -139,7 +165,15 @@ export const ChatPage = () => {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const showEmpty = !activeSessionId || (!loadingMessages && (!messages || messages.length === 0))
+  const showEmpty = !activeSessionId || (!loadingMessages && (!messages || messages.length === 0) && !optimisticMessage)
+
+  // Combine real messages with optimistic user message
+  const displayMessages = useMemo(() => {
+    if (!messages) return optimisticMessage ? [{ role: 'user', content: optimisticMessage, id: 'opt' }] : []
+    return optimisticMessage
+      ? [...messages, { role: 'user', content: optimisticMessage, id: 'opt' }]
+      : messages
+  }, [messages, optimisticMessage])
 
   return (
     <div className="h-[calc(100vh-5.5rem)] flex gap-4 overflow-hidden">
@@ -233,9 +267,10 @@ export const ChatPage = () => {
               </div>
             </div>
           ) : (
-            messages?.map((m, i) => {
+            displayMessages.map((m, i) => {
               const isUser = m.role === 'user'
               const mid = `msg-${m.id ?? i}`
+              const isLatestAi = !isUser && i === displayMessages.length - 1 && !optimisticMessage
               return (
                 <motion.div key={mid} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2 }}
@@ -252,9 +287,10 @@ export const ChatPage = () => {
                     'group relative rounded-2xl px-4 py-3 text-xs leading-relaxed border max-w-[85%]',
                     isUser
                       ? 'dark:bg-brand-500/10 bg-brand-50 dark:border-brand-500/25 border-brand-200 dark:text-neutral-100 text-neutral-900 rounded-tr-sm'
-                      : 'dark:bg-surface-raised bg-lsurface-raised dark:border-surface-border border-lsurface-border dark:text-neutral-200 text-neutral-800 rounded-tl-sm shadow-sm'
+                      : 'dark:bg-surface-raised bg-lsurface-raised dark:border-surface-border border-lsurface-border dark:text-neutral-200 text-neutral-800 rounded-tl-sm shadow-sm',
+                    m.id === 'opt' && 'opacity-70'
                   )}>
-                    <p className="whitespace-pre-wrap">{m.content}</p>
+                    {isLatestAi ? <TypewriterText text={m.content as string} /> : <p className="whitespace-pre-wrap">{m.content}</p>}
                     {!isUser && (
                       <div className="flex gap-3 mt-2.5 pt-2 border-t dark:border-surface-border border-lsurface-border text-xs dark:text-neutral-500 text-neutral-400">
                         <button onClick={() => copy(m.content, mid)}
