@@ -84,27 +84,36 @@ class CodingInterviewService:
                 )
 
 
-        ai_response = self.ai_service.generate_coding_questions(
+        ai_response = None
+        max_retries = 3
+        
+        for attempt in range(max_retries):
+            ai_response = self.ai_service.generate_coding_questions(
+                    role=role,
+                    company=company,
+                    language=language,
+                    difficulty=difficulty,
+                    number_of_questions=number_of_questions,
+            )
 
-                role=role,
+            print(f"AI RESPONSE (Attempt {attempt+1}):", ai_response)
 
-                company=company,
-
-                language=language,
-
-                difficulty=difficulty,
-
-                number_of_questions=number_of_questions,
-
-                )
-
-
-        print(
-                "AI RESPONSE:",
-                ai_response
-                )
+            if "questions" in ai_response:
+                break
 
 
+        # Guard: AI may return an error dict if JSON was truncated or unparseable.
+        # This happens when the model output exceeds num_predict or the model
+        # returns malformed JSON. Raise a clean error if all retries fail.
+        if not ai_response or "questions" not in ai_response:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    f"AI failed to generate valid coding questions after {max_retries} attempts. "
+                    f"Last error: {ai_response.get('error', 'Unknown error') if ai_response else 'No response'}. "
+                    "Please try again."
+                ),
+            )
 
         for item in ai_response["questions"]:
 
@@ -379,11 +388,7 @@ class CodingInterviewService:
 
 
         if existing_submission:
-
-            raise HTTPException(
-                    status_code=400,
-                    detail="Question already submitted"
-                    )
+            pass # We allow multiple submissions, we just track the latest one
 
         test_cases = question.test_cases
 
