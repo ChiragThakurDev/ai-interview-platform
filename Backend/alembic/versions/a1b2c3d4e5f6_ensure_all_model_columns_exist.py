@@ -97,10 +97,13 @@ def upgrade() -> None:
         "score": sa.Column("score", sa.Integer(), nullable=True),
         "created_at": sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
         "completed_at": sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
-        "language": sa.Column("language", sa.String(), nullable=True),
+        "language": sa.Column("language", sa.String(), nullable=True, server_default="python"),
+        "role": sa.Column("role", sa.String(), nullable=True),
         "difficulty": sa.Column("difficulty", sa.String(), nullable=True),
         "company": sa.Column("company", sa.String(), nullable=True),
-        "number_of_questions": sa.Column("number_of_questions", sa.Integer(), nullable=True, server_default="3"),
+        "current_question": sa.Column("current_question", sa.Integer(), nullable=False, server_default="0"),
+        "answered_questions": sa.Column("answered_questions", sa.Integer(), nullable=False, server_default="0"),
+        "started_at": sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
     }
     for col_name, col_def in coding_interview_columns.items():
         if not _column_exists(conn, "coding_interviews", col_name):
