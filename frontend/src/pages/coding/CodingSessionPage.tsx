@@ -141,15 +141,23 @@ export const CodingSessionPage = () => {
     }
   }, [id, language, navigate, refetchProgress])
 
+  const sendRef = useRef<ReturnType<typeof useCodingWebSocket>['send'] | null>(null)
+
   const { status: wsStatus, send } = useCodingWebSocket({
     interviewId: id,
     onMessage: handleWsMessage,
-    onOpen: () => {
-      // Send start_interview as soon as WS connects
-      send('start_interview')
-    },
     onError: () => showToast.warning('Real-time connection failed — using REST fallback'),
   })
+
+  // Keep sendRef fresh so effects always have the latest send fn
+  useEffect(() => { sendRef.current = send }, [send])
+
+  // Fire start_interview as soon as WebSocket is truly open
+  useEffect(() => {
+    if (wsStatus === 'connected') {
+      sendRef.current?.('start_interview')
+    }
+  }, [wsStatus])
 
   const isWsConnected = wsStatus === 'connected'
   const submitting = wsSubmitting || submittingRest

@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   History, Brain, Code2, Filter, Clock, CheckCircle,
-  XCircle, ArrowRight, AlertCircle
+  XCircle, ArrowRight, AlertCircle, Trophy
 } from 'lucide-react'
 import { useMyInterviews } from '@/hooks'
+import { useCodingHistory } from '@/hooks/useCoding'
 import { Card, Badge, Button, Spinner, EmptyState } from '@/components/ui'
 import { formatDate, scoreColor, difficultyColor } from '@/utils'
 import { cn } from '@/utils'
@@ -23,17 +24,67 @@ const StatusIcon = ({ status }: { status: string }) => {
   return <AlertCircle size={14} className="text-amber-400" />
 }
 
+// Unified interview row shape
+interface UnifiedInterview {
+  id: number
+  type: 'technical' | 'coding'
+  title: string
+  status: string
+  difficulty: string | null
+  score: number | null
+  created_at: string
+  reportUrl: string
+}
+
 export const HistoryPage = () => {
-  const { data: interviews, isLoading } = useMyInterviews()
+  const navigate = useNavigate()
+  const { data: technicalData, isLoading: loadingTechnical } = useMyInterviews()
+  const { data: codingData, isLoading: loadingCoding } = useCodingHistory()
+
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('All')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
 
-  const filtered = (interviews ?? []).filter((iv) => {
+  const isLoading = loadingTechnical || loadingCoding
+
+  // Build unified list
+  const allInterviews: UnifiedInterview[] = [
+    ...(technicalData ?? []).map((iv) => ({
+      id: iv.id,
+      type: 'technical' as const,
+      title: iv.title ?? iv.role ?? 'Technical Interview',
+      status: iv.status ?? 'pending',
+      difficulty: iv.difficulty ?? null,
+      score: iv.score ?? null,
+      created_at: iv.created_at,
+      reportUrl: `/interview/${iv.id}/report`,
+    })),
+    ...(codingData?.history ?? []).map((iv) => ({
+      id: iv.id,
+      type: 'coding' as const,
+      title: iv.company ? `${iv.role} @ ${iv.company}` : iv.role,
+      status: iv.status ?? 'pending',
+      difficulty: iv.difficulty ?? null,
+      score: iv.score ?? null,
+      created_at: iv.created_at,
+      reportUrl: `/coding/${iv.id}/report`,
+    })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+  const filtered = allInterviews.filter((iv) => {
+    const matchType =
+      typeFilter === 'All' ||
+      (typeFilter === 'Technical' && iv.type === 'technical') ||
+      (typeFilter === 'Coding' && iv.type === 'coding')
+
     const matchStatus =
       statusFilter === 'All' ||
       iv.status?.toLowerCase().replace('_', ' ') === statusFilter.toLowerCase()
-    return matchStatus
+
+    return matchType && matchStatus
   })
+
+  const totalTechnical = (technicalData ?? []).length
+  const totalCoding = codingData?.history?.length ?? 0
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
@@ -43,19 +94,24 @@ export const HistoryPage = () => {
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-500 text-xs font-semibold">
               <History size={13} className="text-brand-500" />
-              <span>Session Archive & Scorecards</span>
+              <span>Session Archive &amp; Scorecards</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold dark:text-neutral-100 text-neutral-900 tracking-tight">
               Interview History
             </h1>
             <p className="dark:text-neutral-400 text-neutral-600 text-sm">
-              Full session archive with performance metrics and evaluation reports.
+              Full session archive with performance metrics. Click any row to view the full report.
             </p>
           </div>
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex items-center gap-6 shrink-0">
             <div className="text-center">
-              <p className="text-2xl font-bold text-brand-500">{(interviews ?? []).length}</p>
-              <p className="text-xs dark:text-neutral-400 text-neutral-500 font-semibold">Sessions</p>
+              <p className="text-2xl font-bold text-brand-500">{totalTechnical}</p>
+              <p className="text-xs dark:text-neutral-400 text-neutral-500 font-semibold">Technical</p>
+            </div>
+            <div className="w-px h-8 dark:bg-surface-border bg-lsurface-border" />
+            <div className="text-center">
+              <p className="text-2xl font-bold text-amber-400">{totalCoding}</p>
+              <p className="text-xs dark:text-neutral-400 text-neutral-500 font-semibold">Coding</p>
             </div>
           </div>
         </div>
@@ -127,22 +183,30 @@ export const HistoryPage = () => {
           ) : (
             <div className="space-y-3">
               {filtered.map((iv, i) => {
-                const isCoding = false // useMyInterviews only returns technical interviews
-                const reportUrl = `/interview/${iv.id}/report`
+                const isCoding = iv.type === 'coding'
+                const isCompleted = iv.status?.toLowerCase() === 'completed'
 
                 return (
                   <motion.div
-                    key={iv.id}
+                    key={`${iv.type}-${iv.id}`}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.03 }}
+                    onClick={() => isCompleted && navigate(iv.reportUrl)}
+                    className={isCompleted ? 'cursor-pointer' : ''}
                   >
-                    <Card className="border dark:border-surface-border border-lsurface-border dark:bg-surface-card bg-lsurface-card hover-lift group p-4 sm:p-5">
+                    <Card className={cn(
+                      'border dark:border-surface-border border-lsurface-border dark:bg-surface-card bg-lsurface-card p-4 sm:p-5 transition-all duration-200',
+                      isCompleted && 'hover-lift hover:dark:border-brand-500/40 hover:border-brand-500/30 group'
+                    )}>
                       <div className="flex items-center gap-4">
                         {/* Type Icon */}
                         <div className={cn(
-                          'p-3 rounded-xl shrink-0 group-hover:scale-105 transition-transform',
-                          'dark:bg-brand-500/10 bg-brand-500/10 text-brand-500'
+                          'p-3 rounded-xl shrink-0 transition-transform',
+                          isCompleted && 'group-hover:scale-105',
+                          isCoding
+                            ? 'dark:bg-amber-500/10 bg-amber-500/10 text-amber-400'
+                            : 'dark:bg-brand-500/10 bg-brand-500/10 text-brand-500'
                         )}>
                           {isCoding ? <Code2 size={18} /> : <Brain size={18} />}
                         </div>
@@ -151,7 +215,7 @@ export const HistoryPage = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <p className="text-sm font-semibold dark:text-neutral-100 text-neutral-900 truncate">
-                              {iv.title ?? iv.role ?? 'Untitled Session'}
+                              {iv.title}
                             </p>
                             <Badge variant={isCoding ? 'warning' : 'purple'} size="xs">
                               {isCoding ? 'Coding' : 'Technical'}
@@ -161,9 +225,11 @@ export const HistoryPage = () => {
                             <span className="flex items-center gap-1 text-[11px] font-semibold dark:text-neutral-400 text-neutral-500">
                               <Clock size={11} /> {formatDate(iv.created_at)}
                             </span>
-                            <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-semibold', difficultyColor(iv.difficulty))}>
-                              {iv.difficulty}
-                            </span>
+                            {iv.difficulty && (
+                              <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-semibold', difficultyColor(iv.difficulty))}>
+                                {iv.difficulty}
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -175,17 +241,26 @@ export const HistoryPage = () => {
                           </div>
 
                           {iv.score != null && (
-                            <span className={cn('text-sm font-bold', scoreColor(iv.score))}>
-                              {iv.score} pts
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <Trophy size={12} className={scoreColor(iv.score)} />
+                              <span className={cn('text-sm font-bold', scoreColor(iv.score))}>
+                                {iv.score}
+                              </span>
+                            </div>
                           )}
 
-                          {iv.status?.toLowerCase() === 'completed' && (
-                            <Link to={reportUrl}>
-                              <Button variant="ghost" size="xs" className="gap-1">
-                                Report <ArrowRight size={12} />
-                              </Button>
-                            </Link>
+                          {isCompleted ? (
+                            <div className={cn(
+                              'flex items-center gap-1 text-xs font-semibold text-brand-500 opacity-0 transition-opacity',
+                              'group-hover:opacity-100'
+                            )}>
+                              <span className="hidden sm:block">View Report</span>
+                              <ArrowRight size={13} />
+                            </div>
+                          ) : (
+                            <span className="text-[11px] dark:text-neutral-500 text-neutral-400 font-medium">
+                              {iv.status === 'running' ? 'In progress…' : 'Pending'}
+                            </span>
                           )}
                         </div>
                       </div>
