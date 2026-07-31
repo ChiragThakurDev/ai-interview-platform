@@ -136,6 +136,7 @@ export const CodingSessionPage = () => {
         // silent autosave confirmation
         break
       case 'error':
+        setWsSubmitting(false)
         showToast.error((msg as { type: 'error'; message: string }).message ?? 'WebSocket error')
         break
     }
@@ -146,7 +147,11 @@ export const CodingSessionPage = () => {
   const { status: wsStatus, send } = useCodingWebSocket({
     interviewId: id,
     onMessage: handleWsMessage,
-    onError: () => showToast.warning('Real-time connection failed — using REST fallback'),
+    onClose: () => setWsSubmitting(false),
+    onError: () => {
+      setWsSubmitting(false)
+      showToast.warning('Real-time connection failed — using REST fallback')
+    },
   })
 
   // Keep sendRef fresh so effects always have the latest send fn
