@@ -2,6 +2,7 @@ from app.ai.providers.ollama_provider import (
     get_chat_provider,
     get_json_provider,
     get_coding_provider,
+    get_creative_coding_provider,
     get_fast_provider,
 )
 
@@ -15,6 +16,7 @@ class AIFactory:
     _chat = None
     _json = None
     _coding = None
+    _creative_coding = None
     _fast = None
 
     @classmethod
@@ -40,6 +42,14 @@ class AIFactory:
             cls._coding = get_coding_provider()
 
         return cls._coding
+
+    @classmethod
+    def creative_coding(cls):
+
+        if cls._creative_coding is None:
+            cls._creative_coding = get_creative_coding_provider()
+
+        return cls._creative_coding
 
     @classmethod
     def fast(cls):

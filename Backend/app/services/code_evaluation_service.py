@@ -42,15 +42,25 @@ class CodeEvaluationService:
                 ai_result = {}
 
             # Score is 0-10 in prompt, but we scale it to 0-100 to match DB schema
-            ai_score = ai_result.get("score", 0)
-            if ai_score <= 10:
-                ai_score = int(ai_score * 10)
+            def scale_out_of_100(val, fallback):
+                if val is None:
+                    val = fallback
+                try:
+                    val = float(val)
+                except (ValueError, TypeError):
+                    val = 0
+                return int(val * 10) if val <= 10 else int(val)
+
+            raw_score = ai_result.get("score", 0)
+            ai_score = scale_out_of_100(raw_score, 0)
+            correctness = scale_out_of_100(ai_result.get("correctness"), raw_score)
+            code_quality = scale_out_of_100(ai_result.get("code_quality"), raw_score)
 
             return {
                 "passed": ai_result.get("passed", False),
                 "score": ai_score,
-                "correctness": ai_result.get("correctness", ai_score),
-                "code_quality": ai_result.get("code_quality", ai_score),
+                "correctness": correctness,
+                "code_quality": code_quality,
                 "time_complexity": ai_result.get("time_complexity", "Unknown"),
                 "space_complexity": ai_result.get("space_complexity", "Unknown"),
                 "strengths": ai_result.get("strengths", []),

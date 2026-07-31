@@ -23,6 +23,7 @@ class CodingAIService:
     def __init__(self):
         # qwen2.5-coder:7b — specialist for code generation and analysis
         self.ai = AIFactory.coding()
+        self.creative_ai = AIFactory.creative_coding()
 
     # =====================================================
     # Generate Coding Questions
@@ -36,15 +37,18 @@ class CodingAIService:
         difficulty: str,
         number_of_questions: int,
     ):
+        import uuid
         prompt = CODING_INTERVIEW_GENERATION_PROMPT.format(
             role=role,
             company=company or "Any",
             language=language,
             difficulty=difficulty,
             number_of_questions=number_of_questions,
+            seed=str(uuid.uuid4()),
+            previous_topics="none",
         )
 
-        response = self.ai.generate(prompt)
+        response = self.creative_ai.generate(prompt)
 
         return parse_json_response(response)
 

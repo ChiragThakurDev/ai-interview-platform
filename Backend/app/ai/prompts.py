@@ -645,6 +645,25 @@ Project:
 # =====================================================
 # CODING INTERVIEW GENERATION PROMPT
 # =====================================================
+#
+# Fixed version:
+#   - difficulty now has strict, concrete calibration criteria instead of
+#     just being echoed as a label the model can ignore.
+#   - added a `seed` + `previous_topics` mechanism so repeated calls don't
+#     converge on the same canonical problem (e.g. "reverse a string",
+#     "two sum") every time.
+#   - company now explicitly only influences "flavor"/framing, not
+#     difficulty, and is not referenced by name inside the question text.
+#
+# Callers must now pass two extra format args: `seed` and `previous_topics`.
+#   seed             -> pass a fresh random value (e.g. uuid4()) per call
+#   previous_topics  -> comma-separated list of topics/titles already
+#                        generated in this session; pass "none" if empty
+#
+# Also recommend calling the API with a higher temperature (e.g. 0.8-1.0)
+# for this specific prompt — low/zero temperature is a common second cause
+# of repeated output even with a good prompt.
+# =====================================================
 
 CODING_INTERVIEW_GENERATION_PROMPT = """
 You are a Senior Software Engineer and Coding Interview Expert.
@@ -662,6 +681,54 @@ Programming Language:
 
 Difficulty:
 {difficulty}
+
+Random Seed (use only to vary topic/problem selection, never mention it in the output):
+{seed}
+
+Topics/titles already used in this session — do NOT repeat or produce close variants of these:
+{previous_topics}
+
+=====================================================
+DIFFICULTY CALIBRATION (STRICT)
+=====================================================
+
+Select the topic, technique, and constraints according to the requested tier:
+
+- easy:
+  - Uses a single core data structure (array, string, hash map, or basic linked list).
+  - Target time complexity: O(n) or O(n log n).
+  - At most 1 edge case category to consider.
+  - Comparable in depth to a LeetCode "Easy" problem.
+
+- medium:
+  - Requires combining two techniques (e.g. two pointers + hash map, BFS/DFS + queue or stack, 1D dynamic programming, interval merging).
+  - Target time complexity: O(n log n), or O(n^2) only if justified by problem constraints.
+  - At least 2 distinct edge case categories.
+  - Comparable in depth to a LeetCode "Medium" problem.
+
+- hard:
+  - Requires an advanced technique (2D dynamic programming, graph algorithms, greedy with proof of correctness, tries, segment trees/Fenwick trees, backtracking with pruning, union-find).
+  - Must require balancing both time AND space complexity tradeoffs.
+  - At least 3 edge case categories, including at least one large-input / adversarial case.
+  - Comparable in depth to a LeetCode "Hard" problem.
+
+Do NOT generate the same underlying problem across different difficulty tiers by simply relabeling it — the technique and structure must genuinely differ.
+
+=====================================================
+TOPIC VARIETY (STRICT)
+=====================================================
+
+Using the random seed above as a tiebreaker, choose the underlying topic area from this pool (filtered to what's appropriate for the requested difficulty tier): arrays, strings, hash maps, two pointers, sliding window, linked lists, stacks, queues, trees, graphs, heaps, tries, dynamic programming, greedy algorithms, backtracking, binary search, intervals, bit manipulation, union-find.
+
+Do NOT default to the most common/canonical textbook problem for a topic (e.g. avoid "reverse a string", "two sum", "valid parentheses", "fibonacci" unless the role/company context specifically calls for a fundamentals check) — prefer a less obvious variant or a real-world-flavored wrapper around the same core technique.
+
+If `previous_topics` is non-empty, actively pick a different topic area and technique than what's listed there.
+
+=====================================================
+COMPANY CONTEXT
+=====================================================
+
+Tailor the problem's *framing and flavor* (e.g. product-sense wrapper, systems-adjacent constraints, realistic scenario) to match the general engineering interview style commonly associated with {company} — without changing the difficulty tier rules above, and without mentioning {company} by name anywhere inside the question text itself.
 
 =====================================================
 STRICT OUTPUT RULES
@@ -737,6 +804,8 @@ STARTER CODE RULES
 =====================================================
 
 The starter code MUST be valid, executable code in {language}.
+CRITICAL: The starter_code MUST ONLY contain the function/class declaration and a dummy return statement (e.g. `return 0;`, `return "";`, or `pass`).
+You MUST NOT write the actual algorithm or solution logic inside `starter_code`.
 
 Example (if {language} is Python):
 def reverse_string(s):
@@ -836,20 +905,26 @@ Runtime Error:
 
 Evaluate the submission on:
 
-1. Correctness (0-10)
+1. Correctness (0-10): Give 0 if code is incomplete, a stub, or fails completely.
 2. Code Quality (0-10)
 3. Logic
-4. Time Complexity
-5. Space Complexity
+4. Time Complexity: Analyze the actual written code, not the optimal solution.
+5. Space Complexity: Analyze the actual written code.
 6. Readability
 7. Edge Cases
-8. Bugs
+8. Bugs: List all logical and syntax errors.
 9. Optimization Suggestions
-10. Overall Score (0-10)
-11. Passed (true/false)
+10. Overall Score (0-10): Give 0 if code is incomplete or a stub.
+11. Passed (true/false): Must be false if correctness < 10 or bugs exist.
 12. Overall Feedback
 
-Return ONLY valid JSON in this exact format:
+CRITICAL RULES:
+- Do NOT copy the values from the example JSON below. It is ONLY a schema example.
+- Evaluate the ACTUAL candidate code provided.
+- If the candidate code is a stub (e.g. just `return "";` or `pass`), it MUST fail (`passed: false`) with a score of 0.
+- Do NOT assume they implemented the optimal solution if the code does not reflect it.
+
+Return ONLY valid JSON in this exact schema (replace the example values with your actual evaluation):
 
 {{
   "score": 8,

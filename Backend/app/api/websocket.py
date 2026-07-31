@@ -279,7 +279,7 @@ async def coding_interview_socket(
 
 
                         "execution":
-                        result["execution"],
+                        result.get("execution", {"success": True, "stdout": "", "stderr": "", "return_code": 0}),
 
 
                         "evaluation":

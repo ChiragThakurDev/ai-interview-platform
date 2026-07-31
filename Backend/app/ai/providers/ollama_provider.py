@@ -159,6 +159,26 @@ def get_coding_provider() -> OllamaProvider:
     )
 
 
+def get_creative_coding_provider() -> OllamaProvider:
+    """
+    Code generation provider with higher temperature.
+    Model: qwen2.5-coder:7b
+    - Higher temperature (0.8) for varied topic generation.
+    - JSON mode on.
+    """
+    return OllamaProvider(
+        model=CODING_MODEL,
+        temperature=0.8,
+        json_mode=True,
+        num_ctx=2048,
+        num_predict=2048,
+        keep_alive="30m",
+        fallback_model="deepseek-coder:1.3b",
+        timeout=60,
+    )
+
+
+
 def get_json_provider() -> OllamaProvider:
     """
     Structured JSON output provider.
