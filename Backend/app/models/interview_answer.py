@@ -20,6 +20,15 @@ class InterviewAnswer(Base):
         index=True,
     )
 
+    interview_id = Column(
+        Integer,
+        ForeignKey(
+            "interviews.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+    )
+
     question_id = Column(
         Integer,
         ForeignKey(
@@ -48,6 +57,15 @@ class InterviewAnswer(Base):
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
+    )
+
+    # ==========================================
+    # Relationships
+    # ==========================================
+
+    interview = relationship(
+        "Interview",
+        back_populates="answers",
     )
 
     question = relationship(

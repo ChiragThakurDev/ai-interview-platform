@@ -30,6 +30,7 @@ def create_test_user(
     if user:
         return user
 
+
     user = User(
         name=name,
         email=email,
@@ -39,20 +40,25 @@ def create_test_user(
         is_verified=is_verified,
     )
 
+
     db.add(user)
     db.commit()
     db.refresh(user)
 
+
     return user
 
 
+
 def create_second_user(db):
+
     return create_test_user(
         db,
         name="Second User",
         email="second@example.com",
         password="123@chirag",
     )
+
 
 
 # ----------------------------------------------------
@@ -63,6 +69,7 @@ def create_test_resume(
     db,
     user,
 ):
+
     resume = Resume(
         filename="resume.pdf",
         file_path="/tmp/resume.pdf",
@@ -71,11 +78,14 @@ def create_test_resume(
         user_id=user.id,
     )
 
+
     db.add(resume)
     db.commit()
     db.refresh(resume)
 
+
     return resume
+
 
 
 # ----------------------------------------------------
@@ -89,6 +99,7 @@ def create_test_interview(
     role="Backend Developer",
     difficulty="hard",
 ):
+
     interview = Interview(
         user_id=user.id,
         resume_id=resume.id,
@@ -97,11 +108,14 @@ def create_test_interview(
         difficulty=difficulty,
     )
 
+
     db.add(interview)
     db.commit()
     db.refresh(interview)
 
+
     return interview
+
 
 
 # ----------------------------------------------------
@@ -115,6 +129,7 @@ def create_test_question(
     category="Backend",
     difficulty="hard",
 ):
+
     obj = InterviewQuestion(
         interview_id=interview.id,
         question=question,
@@ -122,11 +137,14 @@ def create_test_question(
         difficulty=difficulty,
     )
 
+
     db.add(obj)
     db.commit()
     db.refresh(obj)
 
+
     return obj
+
 
 
 # ----------------------------------------------------
@@ -136,22 +154,39 @@ def create_test_question(
 def create_test_answer(
     db,
     question,
+    interview=None,
     answer="Sample answer",
     score=80,
     feedback="Good explanation.",
 ):
+
+    """
+    Create InterviewAnswer.
+
+    interview_id is mandatory because
+    InterviewAnswer belongs to Interview.
+    """
+
+    if interview is None:
+        interview = question.interview
+
+
     obj = InterviewAnswer(
+        interview_id=interview.id,
         question_id=question.id,
         answer=answer,
         score=score,
         feedback=feedback,
     )
 
+
     db.add(obj)
     db.commit()
     db.refresh(obj)
 
+
     return obj
+
 
 
 # ----------------------------------------------------
@@ -163,6 +198,7 @@ def create_test_report(
     interview,
     score=80,
 ):
+
     report = InterviewReport(
         interview_id=interview.id,
         overall_score=score,
@@ -179,8 +215,10 @@ def create_test_report(
         summary="Overall good interview performance.",
     )
 
+
     db.add(report)
     db.commit()
     db.refresh(report)
+
 
     return report
