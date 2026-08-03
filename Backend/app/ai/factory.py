@@ -10,51 +10,65 @@ from app.ai.providers.ollama_provider import (
 class AIFactory:
     """
     Central AI Provider Factory.
-    Returns shared provider instances.
+
+    Every AI service should obtain providers ONLY from here.
+
+    Benefits:
+    - Singleton providers
+    - Easy model swapping
+    - Future OpenAI/Gemini support
+    - Centralized configuration
     """
 
-    _chat = None
-    _json = None
-    _coding = None
-    _creative_coding = None
-    _fast = None
+    _providers = {}
+
+    @classmethod
+    def _get(cls, name: str, creator):
+
+        if name not in cls._providers:
+            cls._providers[name] = creator()
+
+        return cls._providers[name]
 
     @classmethod
     def chat(cls):
-
-        if cls._chat is None:
-            cls._chat = get_chat_provider()
-
-        return cls._chat
+        return cls._get(
+            "chat",
+            get_chat_provider,
+        )
 
     @classmethod
     def json(cls):
-
-        if cls._json is None:
-            cls._json = get_json_provider()
-
-        return cls._json
+        return cls._get(
+            "json",
+            get_json_provider,
+        )
 
     @classmethod
     def coding(cls):
-
-        if cls._coding is None:
-            cls._coding = get_coding_provider()
-
-        return cls._coding
+        return cls._get(
+            "coding",
+            get_coding_provider,
+        )
 
     @classmethod
     def creative_coding(cls):
-
-        if cls._creative_coding is None:
-            cls._creative_coding = get_creative_coding_provider()
-
-        return cls._creative_coding
+        return cls._get(
+            "creative_coding",
+            get_creative_coding_provider,
+        )
 
     @classmethod
     def fast(cls):
+        return cls._get(
+            "fast",
+            get_fast_provider,
+        )
 
-        if cls._fast is None:
-            cls._fast = get_fast_provider()
+    @classmethod
+    def clear_cache(cls):
+        """
+        Useful for testing or hot-reloading.
+        """
 
-        return cls._fast
+        cls._providers.clear()

@@ -1,25 +1,69 @@
 """
-Central AI model registry.
+Central AI Model Registry
 
-Changing a model name here updates the entire application.
-Every service reads this file via AIFactory — never hardcode model names in services.
+This file is the single source of truth for every AI model
+used by the application.
 
-Available models:
-  llama3.1:8b        → general language tasks, chat, fast responses
-  qwen2.5-coder:7b   → code generation, evaluation, structured JSON output
+Never hardcode model names anywhere else.
 
-Model assignments:
-  CHAT_MODEL:    llama3.1:8b      — Conversational responses. No JSON mode.
-  CODING_MODEL:  qwen2.5-coder:7b — Code generation, evaluation, reports.
-  JSON_MODEL:    qwen2.5-coder:7b — Structured JSON output. qwen follows schemas
-                                    more reliably than llama at this size.
-  FAST_MODEL:    llama3.1:8b      — General-purpose, low-context tasks.
+Providers should always import MODEL_REGISTRY.
 """
 
-CHAT_MODEL = "phi4-mini:latest"
+from app.core.config import settings
 
-CODING_MODEL = "qwen2.5-coder:3b"
 
-JSON_MODEL = "qwen2.5-coder:3b"
+# ======================================================
+# Individual Models
+# ======================================================
 
-FAST_MODEL = "llama3.2:3b"
+CHAT_MODEL = settings.chat_model
+
+CODING_MODEL = settings.coding_model
+
+JSON_MODEL = settings.json_model
+
+FAST_MODEL = settings.fast_model
+
+EMBEDDING_MODEL = settings.embedding_model
+
+VISION_MODEL = settings.vision_model
+
+
+# ======================================================
+# Registry
+# ======================================================
+
+MODEL_REGISTRY = {
+
+    "chat": CHAT_MODEL,
+
+    "coding": CODING_MODEL,
+
+    "json": JSON_MODEL,
+
+    "fast": FAST_MODEL,
+
+    "embedding": EMBEDDING_MODEL,
+
+    "vision": VISION_MODEL,
+
+}
+
+
+# ======================================================
+# Helper
+# ======================================================
+
+def get_model(task: str) -> str:
+    """
+    Returns the configured model for a task.
+
+    Example:
+        get_model("chat")
+        get_model("coding")
+    """
+
+    return MODEL_REGISTRY.get(
+        task,
+        FAST_MODEL,
+    )

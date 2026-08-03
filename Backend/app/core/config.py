@@ -24,7 +24,6 @@ class Settings(BaseSettings):
 
     debug: bool = False
 
-
     # ==============================
     # Frontend
     # ==============================
@@ -32,7 +31,6 @@ class Settings(BaseSettings):
     frontend_url: str = (
         "http://localhost:3000"
     )
-
 
     # ==============================
     # JWT Security
@@ -42,15 +40,11 @@ class Settings(BaseSettings):
 
     algorithm: str = "HS256"
 
-
-
     # ==============================
     # Database
     # ==============================
 
     database_url: str
-
-
 
     # ==============================
     # Token Expiry
@@ -64,8 +58,6 @@ class Settings(BaseSettings):
 
     password_reset_expire_minutes: int = 15
 
-
-
     # ==============================
     # Redis
     # ==============================
@@ -73,8 +65,6 @@ class Settings(BaseSettings):
     redis_url: str = (
         "redis://localhost:6379/0"
     )
-
-
 
     # ==============================
     # SMTP Email
@@ -90,37 +80,73 @@ class Settings(BaseSettings):
 
     smtp_password: str
 
+    # ==================================================
+    # AI Configuration
+    # ==================================================
 
+    # Provider
+    ai_provider: str = "ollama"
 
-    # ==============================
-    # AI / Ollama
-    # ==============================
-
+    # Ollama Server
     ollama_url: str = (
         "http://host.docker.internal:11434"
     )
 
-
-    ollama_model: str = (
-        "llama3.1:8b"
+    # Chat Model
+    chat_model: str = (
+        "phi4-mini:latest"
     )
 
+    # Coding Model
+    coding_model: str = (
+        "qwen2.5-coder:3b"
+    )
 
+    # Structured JSON Model
+    json_model: str = (
+        "qwen2.5-coder:3b"
+    )
+
+    # Fast / Cheap Model
+    fast_model: str = (
+        "llama3.2:3b"
+    )
+
+    # Embedding Model (Future)
+    embedding_model: str = (
+        "nomic-embed-text"
+    )
+
+    # Vision Model (Future)
+    vision_model: str = (
+        "llava:7b"
+    )
+
+    # ==================================================
+    # AI Generation Settings
+    # ==================================================
+
+    chat_temperature: float = 0.7
+
+    coding_temperature: float = 0.2
+
+    json_temperature: float = 0.1
+
+    fast_temperature: float = 0.3
+
+    max_tokens: int = 4096
+
+    request_timeout: int = 300
 
     # ==============================
     # Pydantic Configuration
     # ==============================
 
     model_config = SettingsConfigDict(
-
         env_file=ENV_FILE,
-
         case_sensitive=False,
-
         extra="ignore",
-
     )
-
 
 
 settings = Settings()

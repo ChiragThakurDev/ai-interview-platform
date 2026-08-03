@@ -31,10 +31,8 @@ import logging
 from langchain_ollama import ChatOllama
 
 from app.ai.models import (
-    CHAT_MODEL,
-    JSON_MODEL,
-    CODING_MODEL,
-    FAST_MODEL,
+    MODEL_REGISTRY,
+    get_model,
 )
 
 from app.core.config import settings
@@ -89,6 +87,22 @@ class OllamaProvider:
         self.kwargs = kwargs
         self.json_mode = json_mode
 
+
+    def chat(
+            self,
+            message,
+            ) -> str:
+        """
+        Chat using a list of LangChain messages.
+        """
+
+        response =self.llm.invoke(messages)
+
+        return response.content 
+
+
+
+
     def generate(self, prompt: str) -> str:
         try:
             response = self.llm.invoke(prompt)
@@ -112,108 +126,117 @@ class OllamaProvider:
             raise e
 
 
+    def stream(
+            self,
+            prompt:str,
+            ):
+        """
+        Stream plain text response token by token
+
+        """
+        for chunk in self.llm.stream(prompt):
+            yield chunk.content
+
+    def stream_chat(
+            self,
+            message,
+            ):
+        """
+        Stream chat response token by token.
+
+        """
+
+        for chunk in self.llm.stream(message):
+            yield chunk.content
+
+
+
+
 # =====================================================
 # Provider Factory Functions
 # =====================================================
 # Called exclusively by AIFactory — do not call directly from services.
 
-
 def get_chat_provider() -> OllamaProvider:
     """
-    Conversational chat provider.
-    Model: llama3.2:3b
-    - Low temperature for coherent but natural responses.
-    - Smaller ctx (2048) since chat turns are short.
-    - No JSON mode — returns natural language.
+    Conversational Chat Provider
     """
+
     return OllamaProvider(
-        model=CHAT_MODEL,
-        temperature=0.7,
+        model=get_model("chat"),
+        temperature=settings.chat_temperature,
         json_mode=False,
         num_ctx=2048,
         num_predict=512,
         keep_alive="30m",
-        fallback_model="llama3.2:3b",
-        timeout=45,
+        fallback_model=get_model("fast"),
+        timeout=settings.request_timeout,
     )
-
 
 def get_coding_provider() -> OllamaProvider:
     """
-    Code generation and evaluation provider.
-    Model: qwen2.5-coder:7b
-    - Near-zero temperature for correct, deterministic code.
-    - JSON mode on — all coding tasks return structured JSON.
-    - num_predict=4096: coding questions with test cases + starter code + solutions
-      can easily exceed 2000+ tokens per question. 1024 caused truncated/broken JSON.
+    Coding Provider
     """
+
     return OllamaProvider(
-        model=CODING_MODEL,
-        temperature=0.1,
+        model=get_model("coding"),
+        temperature=settings.coding_temperature,
         json_mode=True,
         num_ctx=2048,
         num_predict=2048,
         keep_alive="30m",
-        fallback_model="deepseek-coder:1.3b",
-        timeout=60,
+        fallback_model=get_model("fast"),
+        timeout=settings.request_timeout,
     )
-
 
 def get_creative_coding_provider() -> OllamaProvider:
     """
-    Code generation provider with higher temperature.
-    Model: qwen2.5-coder:7b
-    - Higher temperature (0.8) for varied topic generation.
-    - JSON mode on.
+    Creative Coding Provider
     """
+
     return OllamaProvider(
-        model=CODING_MODEL,
+        model=get_model("coding"),
         temperature=0.8,
         json_mode=True,
         num_ctx=2048,
         num_predict=2048,
         keep_alive="30m",
-        fallback_model="deepseek-coder:1.3b",
-        timeout=60,
+        fallback_model=get_model("fast"),
+        timeout=settings.request_timeout,
     )
-
 
 
 def get_json_provider() -> OllamaProvider:
     """
-    Structured JSON output provider.
-    Model: qwen2.5-coder:7b
-    - Zero temperature for fully deterministic schema-compliant output.
-    - JSON mode enforced.
-    - Used for question generation, resume analysis, roadmaps.
+    JSON Provider
     """
+
     return OllamaProvider(
-        model=JSON_MODEL,
-        temperature=0.0,
+        model=get_model("json"),
+        temperature=settings.json_temperature,
         json_mode=True,
         num_ctx=2048,
         num_predict=1024,
         keep_alive="30m",
-        fallback_model="deepseek-coder:1.3b",
-        timeout=45,
+        fallback_model=get_model("fast"),
+        timeout=settings.request_timeout,
     )
 
 
 def get_fast_provider() -> OllamaProvider:
     """
-    Low-latency general-purpose provider.
-    Model: llama3.2:3b
-    - Smallest model, fastest inference, fits 100% in VRAM.
-    - No JSON mode — returns natural language.
-    - Reduced ctx and predict for maximum speed.
+    Fast Provider
     """
+
     return OllamaProvider(
-        model=FAST_MODEL,
-        temperature=0.2,
+        model=get_model("fast"),
+        temperature=settings.fast_temperature,
         json_mode=False,
         num_ctx=1024,
         num_predict=512,
         keep_alive="30m",
-        fallback_model="deepseek-coder:1.3b",
-        timeout=30,
+        fallback_model=get_model("fast"),
+        timeout=settings.request_timeout,
     )
+
+
