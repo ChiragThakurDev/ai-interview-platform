@@ -1,40 +1,47 @@
 """
 Interview Runtime Service.
 
-Application layer between API and runtime engine.
+Handles persistent interview runtime state.
 
 Responsibilities:
-- Manage interview state
-- Evaluate answers using AI
+- Start interview session
+- Load existing session
+- Update progress
 - Save answers
-- Move interview forward
+- Complete interview
+- Remove runtime
 """
 
 
+from sqlalchemy.orm import Session
+
 from app.interview_runtime.controller import InterviewController
-from app.services.interview_ai_service import InterviewAIService
-from app.services.interview_answer_service import InterviewAnswerService
+
+from app.services.interview_ai_service import (
+    InterviewAIService,
+)
+
+from app.services.interview_answer_service import (
+    InterviewAnswerService,
+)
+
+from app.services.interview_session_service import (
+    InterviewSessionService,
+)
+
 
 
 class InterviewRuntimeService:
 
+
     def __init__(
         self,
+        db: Session | None = None,
         ai_service: InterviewAIService | None = None,
         answer_service: InterviewAnswerService | None = None,
     ):
-        """
-        Dependencies are optional for backward compatibility.
 
-        Existing runtime tests:
-            InterviewRuntimeService()
-
-        Production AI flow:
-            InterviewRuntimeService(
-                ai_service,
-                answer_service
-            )
-        """
+        self.db = db
 
         self.controller = InterviewController()
 
@@ -43,22 +50,66 @@ class InterviewRuntimeService:
         self.answer_service = answer_service
 
 
+        self.session_service = (
+            InterviewSessionService(db)
+            if db
+            else None
+        )
+
+
+
     # =====================================================
-    # Start Interview
+    # START RUNTIME
     # =====================================================
 
     def start_runtime(
         self,
         interview_id: int,
+        total_questions: int = 0,
     ):
 
-        return self.controller.start(
-            interview_id
+
+        # Persistent Database Mode
+
+        if self.session_service:
+
+
+            existing = (
+                self.session_service
+                .get_session(
+                    interview_id
+                )
+            )
+
+
+            if existing:
+                return existing
+
+
+
+            return (
+                self.session_service
+                .create_session(
+                    interview_id,
+                    total_questions,
+                )
+            )
+
+
+
+        # Legacy Memory Mode
+
+        return (
+            self.controller
+            .start(
+                interview_id
+            )
         )
 
 
+
     # =====================================================
-    # Submit Candidate Answer
+    # SUBMIT ANSWER
     # =====================================================
 
     def submit_answer(
@@ -71,36 +122,6 @@ class InterviewRuntimeService:
         difficulty: str = "medium",
         role: str | None = None,
     ):
-        """
-        Supports two modes.
-
-        --------------------------------
-        Old Runtime Mode
-        --------------------------------
-
-        submit_answer(
-            interview_id,
-            score
-        )
-
-        Returns:
-            InterviewRuntime object
-
-
-        --------------------------------
-        AI Evaluation Mode
-        --------------------------------
-
-        submit_answer(
-            interview_id=1,
-            question_id=10,
-            question_text="Explain JWT",
-            answer="JWT is token based authentication"
-        )
-
-        Returns:
-            Evaluation response dictionary
-        """
 
 
         feedback = ""
@@ -108,17 +129,22 @@ class InterviewRuntimeService:
         evaluation = {}
 
 
-        # =====================================================
+
+        # =================================================
         # AI Evaluation
-        # =====================================================
+        # =================================================
 
         if self.ai_service and answer:
 
-            evaluation = self.ai_service.evaluate_answer(
-                question=question_text,
-                answer=answer,
-                difficulty=difficulty,
-                role=role,
+
+            evaluation = (
+                self.ai_service
+                .evaluate_answer(
+                    question=question_text,
+                    answer=answer,
+                    difficulty=difficulty,
+                    role=role,
+                )
             )
 
 
@@ -134,17 +160,16 @@ class InterviewRuntimeService:
             )
 
 
-        # =====================================================
-        # Default Score
-        # =====================================================
 
         if score is None:
+
             score = 0
 
 
-        # =====================================================
+
+        # =================================================
         # Save Answer
-        # =====================================================
+        # =================================================
 
         saved_answer = None
 
@@ -155,98 +180,90 @@ class InterviewRuntimeService:
             and answer
         ):
 
-            saved_answer = self.answer_service.create_answer(
-                question_id=question_id,
-                answer=answer,
-                score=int(score),
-                feedback=feedback,
+
+            saved_answer = (
+                self.answer_service
+                .create_answer(
+                    question_id=question_id,
+                    answer=answer,
+                    score=int(score),
+                    feedback=feedback,
+                )
             )
 
 
-        # =====================================================
-        # Update Runtime
-        # =====================================================
 
-        runtime = self.controller.submit_answer(
-            interview_id,
-            score,
+        # =================================================
+        # Persistent Session Update
+        # =================================================
+
+        if self.session_service:
+
+
+            session = (
+                self.session_service
+                .get_session(
+                    interview_id
+                )
+            )
+
+
+            if session:
+
+
+                session = (
+                    self.session_service
+                    .answer_question(
+                        session
+                    )
+                )
+
+
+                return {
+
+                    "answer_id":
+                        saved_answer.id
+                        if saved_answer
+                        else None,
+
+
+                    "score": score,
+
+
+                    "feedback": feedback,
+
+
+                    "completed":
+                        session.status
+                        == "completed",
+
+
+                    "current_question":
+                        session.current_question,
+
+                }
+
+
+
+        # =================================================
+        # Legacy Runtime Mode
+        # =================================================
+
+        runtime = (
+            self.controller
+            .submit_answer(
+                interview_id,
+                score,
+            )
         )
 
 
-        # =====================================================
-        # Backward Compatibility
-        # =====================================================
+        return runtime
 
-        if (
-            self.ai_service is None
-            and self.answer_service is None
-        ):
-            return runtime
-
-
-        # =====================================================
-        # AI Response
-        # =====================================================
-
-        return {
-
-            "answer_id": (
-                saved_answer.id
-                if saved_answer
-                else None
-            ),
-
-            "score": score,
-
-            "feedback": feedback,
-
-            "strengths": evaluation.get(
-                "strengths",
-                [],
-            ),
-
-            "weaknesses": evaluation.get(
-                "weaknesses",
-                [],
-            ),
-
-            "completed": runtime.completed,
-
-            "next_question": runtime.current_question,
-
-        }
 
 
     # =====================================================
-    # Skip Question
-    # =====================================================
-
-    def skip_question(
-        self,
-        interview_id: int,
-    ):
-
-        return self.controller.skip_question(
-            interview_id
-        )
-
-
-    # =====================================================
-    # Finish Interview
-    # =====================================================
-
-    def finish_runtime(
-        self,
-        interview_id: int,
-    ):
-
-        return self.controller.finish(
-            interview_id
-        )
-
-
-    # =====================================================
-    # Get Runtime
+    # GET RUNTIME
     # =====================================================
 
     def get_runtime(
@@ -254,20 +271,164 @@ class InterviewRuntimeService:
         interview_id: int,
     ):
 
-        return self.controller.get_runtime(
-            interview_id
+
+        if self.session_service:
+
+
+            return (
+                self.session_service
+                .get_session(
+                    interview_id
+                )
+            )
+
+
+
+        return (
+            self.controller
+            .get_runtime(
+                interview_id
+            )
         )
 
 
+
     # =====================================================
-    # Remove Runtime
+    # FINISH RUNTIME
+    # =====================================================
+
+    def finish_runtime(
+        self,
+        interview_id: int,
+    ):
+
+
+        if self.session_service:
+
+
+            session = (
+                self.session_service
+                .get_session(
+                    interview_id
+                )
+            )
+
+
+            if session:
+
+
+                return (
+                    self.session_service
+                    .finish_session(
+                        session
+                    )
+                )
+
+
+
+        return (
+            self.controller
+            .finish(
+                interview_id
+            )
+        )
+
+
+
+    # =====================================================
+    # SKIP QUESTION
+    # =====================================================
+
+    def skip_question(
+        self,
+        interview_id: int,
+    ):
+
+
+        if self.session_service:
+
+
+            session = (
+                self.session_service
+                .get_session(
+                    interview_id
+                )
+            )
+
+
+            if session:
+
+
+                return (
+                    self.session_service
+                    .answer_question(
+                        session
+                    )
+                )
+
+
+
+        return (
+            self.controller
+            .skip_question(
+                interview_id
+            )
+        )
+
+
+
+    # =====================================================
+    # REMOVE RUNTIME
     # =====================================================
 
     def remove_runtime(
         self,
         interview_id: int,
     ):
+        """
+        Remove interview runtime.
 
-        self.controller.remove_runtime(
-            interview_id
+        Persistent mode:
+            Deletes database session.
+
+        Legacy mode:
+            Deletes memory runtime.
+        """
+
+
+        # ===============================
+        # Persistent Database Runtime
+        # ===============================
+
+        if self.session_service:
+
+
+            session = (
+                self.session_service
+                .get_session(
+                    interview_id
+                )
+            )
+
+
+            if session:
+
+                self.session_service.delete_session(
+                    session
+                )
+
+
+            return True
+
+
+
+        # ===============================
+        # Legacy Memory Runtime
+        # ===============================
+
+        return (
+            self.controller
+            .remove_runtime(
+                interview_id
+            )
         )
