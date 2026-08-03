@@ -24,7 +24,6 @@ class AIFactory:
 
     @classmethod
     def _get(cls, name: str, creator):
-
         if name not in cls._providers:
             cls._providers[name] = creator()
 
@@ -36,6 +35,20 @@ class AIFactory:
             "chat",
             get_chat_provider,
         )
+
+    @classmethod
+    def general(cls):
+        """
+        Default general-purpose AI provider.
+
+        Used by services like:
+        - Resume analysis
+        - Interview generation
+        - General text understanding
+
+        Kept as an alias for chat() for backward compatibility.
+        """
+        return cls.chat()
 
     @classmethod
     def json(cls):
@@ -70,5 +83,4 @@ class AIFactory:
         """
         Useful for testing or hot-reloading.
         """
-
         cls._providers.clear()

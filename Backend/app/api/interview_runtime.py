@@ -27,6 +27,7 @@ router = APIRouter(
 )
 
 
+
 # =====================================================
 # Dependency
 # =====================================================
@@ -39,17 +40,23 @@ def get_runtime_service(
         db
     )
 
-    # New AI Factory Architecture
+
+    # AI Provider
+
     ai_provider = AIFactory.json()
+
 
     ai_service = InterviewAIService(
         ai_provider
     )
 
+
     return InterviewRuntimeService(
+        db=db,   # IMPORTANT: Enable persistent runtime
         ai_service=ai_service,
         answer_service=answer_service,
     )
+
 
 
 # =====================================================
@@ -73,7 +80,9 @@ def start_runtime(
         interview_id
     )
 
+
     return runtime
+
 
 
 # =====================================================
@@ -90,13 +99,16 @@ def submit_answer(
     answer: str,
     difficulty: str = "medium",
     role: str | None = None,
+
     service: InterviewRuntimeService = Depends(
         get_runtime_service
     ),
+
     current_user: User = Depends(
         get_current_user
     ),
 ):
+
 
     result = service.submit_answer(
         interview_id=interview_id,
@@ -107,7 +119,9 @@ def submit_answer(
         role=role,
     )
 
+
     return result
+
 
 
 # =====================================================
@@ -119,19 +133,21 @@ def submit_answer(
 )
 def skip_question(
     interview_id: int,
+
     service: InterviewRuntimeService = Depends(
         get_runtime_service
     ),
+
     current_user: User = Depends(
         get_current_user
     ),
 ):
 
-    runtime = service.skip_question(
+
+    return service.skip_question(
         interview_id
     )
 
-    return runtime
 
 
 # =====================================================
@@ -143,19 +159,21 @@ def skip_question(
 )
 def finish_runtime(
     interview_id: int,
+
     service: InterviewRuntimeService = Depends(
         get_runtime_service
     ),
+
     current_user: User = Depends(
         get_current_user
     ),
 ):
 
-    runtime = service.finish_runtime(
+
+    return service.finish_runtime(
         interview_id
     )
 
-    return runtime
 
 
 # =====================================================
@@ -167,25 +185,32 @@ def finish_runtime(
 )
 def get_runtime(
     interview_id: int,
+
     service: InterviewRuntimeService = Depends(
         get_runtime_service
     ),
+
     current_user: User = Depends(
         get_current_user
     ),
 ):
 
+
     runtime = service.get_runtime(
         interview_id
     )
 
+
     if runtime is None:
+
         raise HTTPException(
             status_code=404,
             detail="Runtime not found",
         )
 
+
     return runtime
+
 
 
 # =====================================================
@@ -197,17 +222,21 @@ def get_runtime(
 )
 def remove_runtime(
     interview_id: int,
+
     service: InterviewRuntimeService = Depends(
         get_runtime_service
     ),
+
     current_user: User = Depends(
         get_current_user
     ),
 ):
 
+
     service.remove_runtime(
         interview_id
     )
+
 
     return {
         "message": "Runtime removed successfully"

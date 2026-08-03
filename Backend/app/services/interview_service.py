@@ -5,9 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.models.interview import Interview
 
-from app.repositories.interview_repository import (
-    InterviewRepository,
-)
+from app.repositories.interview_repository import InterviewRepository
 
 from app.services.interview_question_service import (
     InterviewQuestionService,
@@ -19,14 +17,14 @@ from app.services.interview_answer_service import (
 
 from app.services.ai_service import AIService
 
+from app.services.interview_runtime_service import (
+    InterviewRuntimeService,
+)
+
 from app.schemas.interview_result import (
     InterviewResultResponse,
     InterviewInfoResponse,
     QuestionResultResponse,
-)
-
-from app.services.interview_runtime_service import (
-    InterviewRuntimeService,
 )
 
 
@@ -53,8 +51,6 @@ class InterviewService:
 
         self.ai_service = AIService()
 
-
-        # Updated runtime service initialization
         self.runtime_service = InterviewRuntimeService(
             ai_service=self.ai_service,
             answer_service=self.answer_service,
@@ -86,6 +82,10 @@ class InterviewService:
         )
 
 
+    # =====================================================
+    # Get Interview
+    # =====================================================
+
     def get_interview(
         self,
         interview_id: int,
@@ -95,6 +95,10 @@ class InterviewService:
             interview_id
         )
 
+
+    # =====================================================
+    # User Interviews
+    # =====================================================
 
     def get_user_interviews(
         self,
@@ -107,6 +111,61 @@ class InterviewService:
 
 
     # =====================================================
+    # Current Question
+    # =====================================================
+
+    def get_current_question(
+        self,
+        interview: Interview,
+    ):
+
+        if interview.status != "in_progress":
+
+            raise HTTPException(
+                status_code=400,
+                detail="Interview is not active.",
+            )
+
+
+        questions = self.question_service.get_questions(
+            interview.id
+        )
+
+
+        if not questions:
+
+            raise HTTPException(
+                status_code=404,
+                detail="No questions found.",
+            )
+
+
+        index = interview.current_question - 1
+
+
+        if index >= len(questions):
+
+            raise HTTPException(
+                status_code=400,
+                detail="Interview completed.",
+            )
+
+
+        question = questions[index]
+
+
+        return {
+            "interview_id": interview.id,
+            "question_id": question.id,
+            "current_question": interview.current_question,
+            "total_questions": len(questions),
+            "question": question.question,
+            "category": question.category,
+            "difficulty": question.difficulty,
+        }
+
+
+    # =====================================================
     # Start Interview
     # =====================================================
 
@@ -114,6 +173,7 @@ class InterviewService:
         self,
         interview: Interview,
     ):
+
 
         if interview.status == "completed":
 
@@ -125,23 +185,13 @@ class InterviewService:
 
         if interview.status == "in_progress":
 
-            questions = self.question_service.get_questions(
-                interview.id
+            return self.get_current_question(
+                interview
             )
-
-            question = questions[
-                interview.current_question - 1
-            ]
-
-            return {
-                "interview_id": interview.id,
-                "status": interview.status,
-                "current_question": interview.current_question,
-                "question": question.question,
-            }
 
 
         interview.status = "in_progress"
+
         interview.started_at = datetime.now(
             timezone.utc
         )
@@ -164,11 +214,6 @@ class InterviewService:
         )
 
 
-        runtime.progress.total_questions = len(
-            questions
-        )
-
-
         if not questions:
 
             raise HTTPException(
@@ -177,11 +222,16 @@ class InterviewService:
             )
 
 
+        runtime.progress.total_questions = len(
+            questions
+        )
+
+
         return {
             "interview_id": interview.id,
             "status": interview.status,
-            "current_question": 1,
-            "question": questions[0].question,
+            "current_question":1,
+            "question":questions[0].question,
         }
 
 
@@ -194,7 +244,6 @@ class InterviewService:
         interview: Interview,
         answer: str,
     ):
-
 
         questions = self.question_service.get_questions(
             interview.id
@@ -209,30 +258,28 @@ class InterviewService:
             )
 
 
-        question_index = interview.current_question - 1
+        index = interview.current_question - 1
 
 
-        if question_index >= len(questions):
+        if index >= len(questions):
 
             raise HTTPException(
                 status_code=400,
-                detail="Interview already completed.",
+                detail="Interview completed.",
             )
 
 
-        current_question = questions[
-            question_index
-        ]
+        question = questions[index]
 
 
         ai_result = self.ai_service.evaluate_answer(
-            question=current_question.question,
+            question=question.question,
             answer=answer,
         )
 
 
         existing_answer = self.answer_service.get_answer(
-            current_question.id
+            question.id
         )
 
 
@@ -245,12 +292,11 @@ class InterviewService:
                 feedback=ai_result.feedback,
             )
 
-
         else:
 
             self.answer_service.create_answer(
                 interview_id=interview.id,
-                question_id=current_question.id,
+                question_id=question.id,
                 answer=answer,
                 score=ai_result.score,
                 feedback=ai_result.feedback,
@@ -259,18 +305,16 @@ class InterviewService:
 
         if interview.current_question >= len(questions):
 
-            finished = self.finish_interview(
+            result = self.finish_interview(
                 interview
             )
 
 
             return {
-                "interview_completed": True,
-                "current_question": None,
-                "next_question": None,
-                "score": finished["score"],
-                "feedback": ai_result.feedback,
-                "message": finished["message"],
+                "interview_completed":True,
+                "score":result["score"],
+                "feedback":ai_result.feedback,
+                "message":result["message"],
             }
 
 
@@ -288,13 +332,25 @@ class InterviewService:
 
 
         return {
-            "interview_completed": False,
-            "current_question": interview.current_question,
-            "next_question": next_question.question,
-            "score": ai_result.score,
-            "feedback": ai_result.feedback,
-            "message": "Answer submitted successfully.",
+
+            "interview_completed":False,
+
+            "current_question":
+                interview.current_question,
+
+            "next_question":
+                next_question.question,
+
+            "score":
+                ai_result.score,
+
+            "feedback":
+                ai_result.feedback,
+
+            "message":
+                "Answer submitted successfully."
         }
+
 
 
     # =====================================================
@@ -306,13 +362,14 @@ class InterviewService:
         interview: Interview,
     ):
 
+
         questions = self.question_service.get_questions(
             interview.id
         )
 
 
-        total_score = 0
-        answered = 0
+        total = 0
+        count = 0
 
 
         for question in questions:
@@ -324,20 +381,21 @@ class InterviewService:
 
             if answer:
 
-                total_score += answer.score
-                answered += 1
+                total += answer.score
+                count += 1
 
 
-        average_score = (
-            total_score // answered
-            if answered
+        score = (
+            total // count
+            if count
             else 0
         )
 
 
-        interview.score = average_score
+        interview.score = score
 
         interview.status = "completed"
+
 
         interview.completed_at = datetime.now(
             timezone.utc
@@ -360,21 +418,32 @@ class InterviewService:
 
 
         return {
-            "interview_id": interview.id,
-            "status": interview.status,
-            "score": interview.score,
-            "duration": interview.duration,
-            "message": "Interview completed successfully.",
+
+            "interview_id":
+                interview.id,
+
+            "status":
+                interview.status,
+
+            "score":
+                score,
+
+            "duration":
+                interview.duration,
+
+            "message":
+                "Interview completed successfully."
         }
 
 
+
     # =====================================================
-    # Results
+    # Interview Results
     # =====================================================
 
     def get_interview_results(
         self,
-        interview_id: int,
+        interview_id:int,
     ):
 
         interview = self.repository.get_with_results(
@@ -383,64 +452,92 @@ class InterviewService:
 
 
         if not interview:
-            return None
+
+            raise HTTPException(
+                status_code=404,
+                detail="Interview not found."
+            )
 
 
         total_score = 0
-        answered_questions = 0
+        answered = 0
 
-        question_results = []
+        results = []
 
 
         for question in interview.questions:
 
-            answer = question.answer
+
+            answer = self.answer_service.get_answer(
+                question.id
+            )
 
 
             if answer:
 
                 total_score += answer.score
-                answered_questions += 1
+                answered += 1
 
 
-            question_results.append(
+
+            results.append(
+
                 QuestionResultResponse(
+
                     id=question.id,
+
                     question=question.question,
+
                     category=question.category,
+
                     difficulty=question.difficulty,
-                    answer=answer.answer if answer else None,
-                    score=answer.score if answer else None,
-                    feedback=answer.feedback if answer else None,
+
+                    answer=
+                    answer.answer
+                    if answer
+                    else None,
+
+                    score=
+                    answer.score
+                    if answer
+                    else None,
+
+                    feedback=
+                    answer.feedback
+                    if answer
+                    else None,
                 )
             )
 
 
+
         average_score = (
-            total_score / answered_questions
-            if answered_questions
+
+            total_score / answered
+
+            if answered
+
             else 0
         )
 
 
         return InterviewResultResponse(
-            interview=InterviewInfoResponse.model_validate(
+
+            interview=
+            InterviewInfoResponse.model_validate(
                 interview
             ),
+
+
             average_score=average_score,
-            total_questions=len(
-                interview.questions
-            ),
-            questions=question_results,
-            report=None,
-        )
 
 
-    def delete_interview(
-        self,
-        interview: Interview,
-    ):
+            total_questions=
+            len(interview.questions),
 
-        self.repository.delete(
-            interview
+
+            questions=results,
+
+
+            report=None
         )

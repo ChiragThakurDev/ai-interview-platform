@@ -1,8 +1,8 @@
-"""add interview session table
+"""initial schema
 
-Revision ID: 12c4a200b904
-Revises: 1a625707d994
-Create Date: 2026-08-03 07:21:08.393800
+Revision ID: 2157e79eb0b9
+Revises: 
+Create Date: 2026-08-03 07:46:00.859577
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '12c4a200b904'
-down_revision: Union[str, Sequence[str], None] = '1a625707d994'
+revision: str = '2157e79eb0b9'
+down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -189,10 +189,10 @@ def upgrade() -> None:
     sa.Column('difficulty', sa.String(), nullable=False),
     sa.Column('status', sa.String(length=20), server_default='pending', nullable=False),
     sa.Column('current_question', sa.Integer(), server_default='0', nullable=False),
+    sa.Column('score', sa.Integer(), server_default='0', nullable=False),
+    sa.Column('duration', sa.Integer(), server_default='0', nullable=False),
     sa.Column('started_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('completed_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('score', sa.Integer(), server_default='0', nullable=True),
-    sa.Column('duration', sa.Integer(), server_default='0', nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.ForeignKeyConstraint(['resume_id'], ['resumes.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
