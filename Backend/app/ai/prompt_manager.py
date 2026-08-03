@@ -3,79 +3,204 @@ Prompt Manager.
 
 Single entry point for all prompt generation.
 
-Supports:
-- Database backed prompts
-- Static prompt fallback
-- Backward compatibility
+Priority:
+
+1. Active prompt from PostgreSQL
+2. Fallback prompt from app.ai.prompts
+
+Responsibilities:
+
+- Validate prompt type
+- Load prompt template
+- Support database-backed prompts
+- Render variables dynamically
 """
 
-from app.ai.template import PromptTemplate
+import logging
+
+from sqlalchemy.orm import Session
+
+from app.ai.templates.renderer import PromptRenderer
+from app.ai.templates.registry import (
+    PROMPT_TEMPLATE_REGISTRY,
+)
+
+from app.ai.prompts import (
+    RESUME_ANALYSIS_PROMPT,
+    INTERVIEW_GENERATION_PROMPT,
+    ANSWER_EVALUATION_PROMPT,
+    INTERVIEW_REPORT_PROMPT,
+    SKILL_ANALYSIS_PROMPT,
+    ROADMAP_PROMPT,
+    CHAT_SYSTEM_PROMPT,
+    CODING_INTERVIEW_GENERATION_PROMPT,
+    CODING_EVALUATION_PROMPT,
+    CODING_INTERVIEW_REPORT_PROMPT,
+)
+
+from app.repositories.prompt_repository import PromptRepository
+from app.services.prompt_service import PromptService
+from app.ai.prompt_loader import PromptLoader
+
+
+logger = logging.getLogger(__name__)
 
 
 class PromptManager:
+    """
+    Central prompt management system.
 
-    _repository = None
+    Priority:
 
+    Database
+        ↓
+    Fallback Templates
+        ↓
+    Prompt Renderer
+    """
 
-    def __init__(
-        self,
-        repository=None,
-    ):
-        """
-        Optional repository injection.
+    # --------------------------------------------------
+    # Fallback Templates
+    # --------------------------------------------------
 
-        If repository exists:
-        database prompts are used.
+    TEMPLATES = {
 
-        Otherwise:
-        fallback to static prompts.
-        """
+        "resume_analysis":
+            RESUME_ANALYSIS_PROMPT,
 
-        self.repository = repository
+        "interview_generation":
+            INTERVIEW_GENERATION_PROMPT,
 
+        "answer_evaluation":
+            ANSWER_EVALUATION_PROMPT,
 
-    @classmethod
-    def set_repository(
-        cls,
-        repository
-    ):
-        """
-        Configure global prompt repository.
-        """
+        "interview_report":
+            INTERVIEW_REPORT_PROMPT,
 
-        cls._repository = repository
+        "skill_analysis":
+            SKILL_ANALYSIS_PROMPT,
 
+        "roadmap":
+            ROADMAP_PROMPT,
+
+        "chat":
+            CHAT_SYSTEM_PROMPT,
+
+        "chat_system":
+            CHAT_SYSTEM_PROMPT,
+
+        "coding_interview_generation":
+            CODING_INTERVIEW_GENERATION_PROMPT,
+
+        "coding_evaluation":
+            CODING_EVALUATION_PROMPT,
+
+        "coding_interview_report":
+            CODING_INTERVIEW_REPORT_PROMPT,
+    }
 
     @staticmethod
     def build(
         prompt_type: str,
+        db: Session | None = None,
         **kwargs,
     ) -> str:
         """
-        Build prompt.
+        Build final prompt.
 
-        Keeps old API working.
+        Flow:
+
+        Prompt Type
+              │
+              ▼
+        PostgreSQL
+              │
+      Exists? │
+        Yes   │   No
+         ▼    │    ▼
+     DB Prompt │ Fallback Template
+          \    │    /
+           ▼   ▼   ▼
+          PromptRenderer
+                │
+                ▼
+          Final Prompt
         """
 
-        repository = PromptManager._repository
+        # ------------------------------------------
+        # Validate prompt type
+        # ------------------------------------------
 
+        if prompt_type not in PROMPT_TEMPLATE_REGISTRY:
+            raise ValueError(
+                f"Unknown prompt type: {prompt_type}"
+            )
 
-        # Try database prompt first
-        if repository:
+        template = None
+        db_prompt_loaded = False
 
-            prompt = repository.get_active(
+        # ------------------------------------------
+        # Try loading active prompt from DB
+        # ------------------------------------------
+
+        if db is not None:
+
+            repository = PromptRepository(db)
+
+            service = PromptService(repository)
+
+            loader = PromptLoader(service)
+
+            try:
+
+                template = loader.load(
+                    prompt_type,
+                    kwargs,
+                )
+
+                db_prompt_loaded = True
+
+            except Exception as e:
+
+                logger.warning(
+                    "Using fallback prompt for '%s': %s",
+                    prompt_type,
+                    e,
+                )
+
+        # ------------------------------------------
+        # Fallback to hardcoded template
+        # ------------------------------------------
+
+        if template is None:
+
+            template = PromptManager.TEMPLATES.get(
                 prompt_type
             )
 
-            if prompt:
+            if template is None:
 
-                return prompt.template.format(
-                    **kwargs
+                logger.error(
+                    "Missing prompt template: %s",
+                    prompt_type,
                 )
 
+                raise ValueError(
+                    f"Prompt template missing: {prompt_type}"
+                )
 
-        # Fallback to existing prompt system
-        return PromptTemplate.build(
-            prompt_type,
+        # ------------------------------------------
+        # Database prompt is already rendered
+        # ------------------------------------------
+
+        if db_prompt_loaded:
+            return template
+
+        # ------------------------------------------
+        # Render fallback template
+        # ------------------------------------------
+
+        return PromptRenderer.render(
+            template,
             **kwargs,
         )

@@ -25,3 +25,5 @@ from app.models.coding_draft import CodingDraft
 from app.models.coding_test_case import CodingTestCase
 
 from app.models.prompt import Prompt
+
+from app.models.prompt_execution import PromptExecution

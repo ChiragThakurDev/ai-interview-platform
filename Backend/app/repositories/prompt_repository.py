@@ -1,9 +1,21 @@
+from datetime import datetime, UTC
+
 from sqlalchemy.orm import Session
 
 from app.models.prompt import Prompt
 
 
 class PromptRepository:
+    """
+    Repository for managing AI prompts.
+
+    Responsibilities:
+    - Fetch active prompts
+    - Manage versions
+    - Activate/deactivate versions
+    - Create/update/delete prompts
+    """
+
 
     def __init__(
         self,
@@ -12,12 +24,17 @@ class PromptRepository:
         self.db = db
 
 
+
+    # =====================================================
+    # Get Active Prompt
+    # =====================================================
+
     def get_active(
         self,
         name: str
     ):
         """
-        Get currently active prompt version.
+        Get active prompt version.
         """
 
         return (
@@ -30,13 +47,18 @@ class PromptRepository:
         )
 
 
+
+    # =====================================================
+    # Get Specific Version
+    # =====================================================
+
     def get_version(
         self,
         name: str,
         version: str
     ):
         """
-        Get a specific prompt version.
+        Get prompt by version.
         """
 
         return (
@@ -49,12 +71,17 @@ class PromptRepository:
         )
 
 
+
+    # =====================================================
+    # Get All Versions
+    # =====================================================
+
     def get_all_versions(
         self,
         name: str
     ):
         """
-        Get all versions of a prompt.
+        Return all versions of prompt.
         """
 
         return (
@@ -68,6 +95,11 @@ class PromptRepository:
             .all()
         )
 
+
+
+    # =====================================================
+    # Create Prompt
+    # =====================================================
 
     def create(
         self,
@@ -86,13 +118,53 @@ class PromptRepository:
         return prompt
 
 
+
+    # =====================================================
+    # Update Prompt
+    # =====================================================
+
+    def update(
+        self,
+        prompt: Prompt,
+        data: dict
+    ):
+        """
+        Update prompt fields.
+        """
+
+        for key, value in data.items():
+
+            if hasattr(prompt, key):
+
+                setattr(
+                    prompt,
+                    key,
+                    value
+                )
+
+
+        prompt.updated_at = datetime.now(UTC)
+
+
+        self.db.commit()
+
+        self.db.refresh(prompt)
+
+
+        return prompt
+
+
+
+    # =====================================================
+    # Disable All Versions
+    # =====================================================
+
     def deactivate_versions(
         self,
         name: str
     ):
         """
-        Disable all previous versions
-        before activating a new one.
+        Disable all active versions.
         """
 
         (
@@ -102,13 +174,19 @@ class PromptRepository:
             )
             .update(
                 {
-                    Prompt.is_active: False
+                    "is_active": False
                 }
             )
         )
 
+
         self.db.commit()
 
+
+
+    # =====================================================
+    # Activate Version
+    # =====================================================
 
     def activate_version(
         self,
@@ -117,28 +195,45 @@ class PromptRepository:
     ):
         """
         Activate selected prompt version.
+
+        Example:
+
+        v1 -> inactive
+        v2 -> active
         """
 
-        # Disable old versions
-        self.deactivate_versions(name)
+        self.deactivate_versions(
+            name
+        )
 
 
-        # Activate selected version
         prompt = self.get_version(
             name,
             version
         )
 
-        if prompt:
-            prompt.is_active = True
 
-            self.db.commit()
+        if prompt is None:
+            return None
 
-            self.db.refresh(prompt)
+
+        prompt.is_active = True
+
+        prompt.updated_at = datetime.now(UTC)
+
+
+        self.db.commit()
+
+        self.db.refresh(prompt)
 
 
         return prompt
 
+
+
+    # =====================================================
+    # Delete Prompt
+    # =====================================================
 
     def delete(
         self,
@@ -148,6 +243,50 @@ class PromptRepository:
         Delete prompt version.
         """
 
-        self.db.delete(prompt)
+        self.db.delete(
+            prompt
+        )
 
         self.db.commit()
+
+
+
+    # =====================================================
+    # Get Prompt Configuration
+    # =====================================================
+
+    def get_config(
+        self,
+        name: str
+    ):
+        """
+        Return active prompt AI configuration.
+
+        Used by LLM factory.
+
+        Returns:
+
+        {
+            model,
+            temperature,
+            provider
+        }
+
+        """
+
+        prompt = self.get_active(
+            name
+        )
+
+
+        if not prompt:
+            return None
+
+
+
+        return {
+            "provider": prompt.provider,
+            "model": prompt.model,
+            "temperature": prompt.temperature,
+            "template": prompt.template,
+        }

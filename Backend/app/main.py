@@ -22,29 +22,24 @@ from app.api.api_key import router as api_key_router
 from app.core.logger import logger
 
 from app.api.resume import router as resume_router
-
 from app.api.ai import router as ai_router
-
-
 from app.api.interview import router as interview_router
-
 from app.api.interview_answer import router as interview_answer_router
-
-
 from app.api.admin import router as admin_router
-
 from app.api.interview_result import (
-        router as interview_result_router,
-        )
-
-
+    router as interview_result_router,
+)
 from app.api.chat import router as chat_router
-
 from app.api.roadmap import router as roadmap_router
-
 from app.api.coding_interview import router as coding_interview_router
-
 from app.api.websocket import router as websocket_router
+
+from app.api import admin_prompts
+
+# =========================
+# NEW
+# =========================
+from app.api import admin_prompt_logs
 
 logger.info("Starting AI Interview Platform...")
 
@@ -64,24 +59,36 @@ app.add_middleware(LoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        settings.frontend_url,       # http://localhost:3000
+        settings.frontend_url,
         "http://127.0.0.1:3000",
         "http://localhost:3000",
-        "http://localhost:3001",      # Frontend running on 3001
+        "http://localhost:3001",
         "http://127.0.0.1:3001",
-        "http://localhost:5173",      # Vite default port
+        "http://localhost:5173",
         "http://127.0.0.1:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # -------------------------
 # EXCEPTION HANDLERS
 # -------------------------
-app.add_exception_handler(HTTPException, http_exception_handler)
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(Exception, global_exception_handler,)
+app.add_exception_handler(
+    HTTPException,
+    http_exception_handler,
+)
+
+app.add_exception_handler(
+    RequestValidationError,
+    validation_exception_handler,
+)
+
+app.add_exception_handler(
+    Exception,
+    global_exception_handler,
+)
 
 # -------------------------
 # ROUTES
@@ -94,22 +101,26 @@ app.include_router(resume_router)
 app.include_router(ai_router)
 app.include_router(interview_router)
 app.include_router(interview_answer_router)
-
-app.include_router(
-    dashboard_router
-)
-
+app.include_router(dashboard_router)
 app.include_router(admin_router)
-
 app.include_router(interview_result_router)
-
-
 app.include_router(chat_router)
 app.include_router(roadmap_router)
-
 app.include_router(coding_interview_router)
 app.include_router(websocket_router)
 
+# Prompt Management APIs
+app.include_router(
+    admin_prompts.router
+)
+
+# =========================
+# NEW
+# Prompt Execution Logs APIs
+# =========================
+app.include_router(
+    admin_prompt_logs.router
+)
 
 # -------------------------
 # ROOT
@@ -120,7 +131,6 @@ async def root():
         "message": f"Welcome to {settings.app_name}"
     }
 
-
 # -------------------------
 # HEALTH CHECK
 # -------------------------
@@ -128,7 +138,9 @@ async def root():
 def health_check():
     try:
         with engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
+            connection.execute(
+                text("SELECT 1")
+            )
 
         return {
             "status": "Database Connected Successfully"
@@ -137,6 +149,5 @@ def health_check():
     except Exception as e:
         return {
             "status": "Database Connection Failed",
-            "error": str(e)
-
-            }        
+            "error": str(e),
+        }

@@ -1,5 +1,4 @@
-from app.ai.factory import AIFactory
-from app.ai.prompts import CHAT_SYSTEM_PROMPT
+from sqlalchemy.orm import Session
 
 from langchain_core.messages import (
     HumanMessage,
@@ -7,28 +6,29 @@ from langchain_core.messages import (
     SystemMessage,
 )
 
+from app.ai.factory import AIFactory
+from app.repositories.prompt_repository import PromptRepository
+from app.services.prompt_service import PromptService
+
 
 class ChatAIService:
     """
     AI Chat service for conversational interview assistance.
 
-    Model: llama3.2:3b (via AIFactory.chat())
-    Reason: Chat is conversational — fast response time matters more than
-            maximum accuracy. llama3.2:3b fits 100% in 4GB VRAM, delivering
-            sub-second first token latency. No JSON mode needed.
-
-    Settings: temperature=0.7, num_ctx=2048, num_predict=512, keep_alive=30m
-
-    Note: This service wraps the same logic as chains.chat_chain but as a
-    class-based service for consistency with the rest of the service layer.
-    Use chat_service.py → chains.chat_chain for the main chat API.
-    This class is available for future extensions (e.g., streaming, context injection).
+    Loads the active system prompt from the database.
+    Falls back to the default prompt if PromptService is configured to do so.
     """
 
-    def __init__(self):
-        # llama3.2:3b — fast, fits in VRAM, great for conversation
+    def __init__(
+        self,
+        db: Session,
+    ):
         self.provider = AIFactory.chat()
         self.llm = self.provider.llm
+
+        self.prompt_service = PromptService(
+            PromptRepository(db)
+        )
 
     def chat(
         self,
@@ -38,28 +38,50 @@ class ChatAIService:
         Generate an AI response given a conversation history.
 
         Args:
-            messages: List of {"role": "user"|"assistant", "content": str}
+            messages: List of
+                {
+                    "role": "user" | "assistant",
+                    "content": str
+                }
 
         Returns:
-            AI response string
+            AI response string.
         """
 
+        system_prompt = self.prompt_service.build_prompt(
+            name="chat",
+            variables={}
+        )
+
         langchain_messages = [
-            SystemMessage(content=CHAT_SYSTEM_PROMPT)
+            SystemMessage(
+                content=system_prompt
+            )
         ]
 
         for message in messages:
+
             role = message.get("role")
             content = message.get("content", "")
 
             if role == "user":
+
                 langchain_messages.append(
-                    HumanMessage(content=content)
-                )
-            elif role == "assistant":
-                langchain_messages.append(
-                    AIMessage(content=content)
+                    HumanMessage(
+                        content=content
+                    )
                 )
 
-        response = self.llm.invoke(langchain_messages)
+            elif role == "assistant":
+
+                langchain_messages.append(
+                    AIMessage(
+                        content=content
+                    )
+                )
+
+        response = self.llm.invoke(
+            langchain_messages
+        )
+
         return response.content

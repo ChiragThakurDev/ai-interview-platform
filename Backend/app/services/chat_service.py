@@ -11,6 +11,7 @@ class ChatService:
         self,
         db: Session,
     ):
+        self.db = db
         self.repository = ChatRepository(db)
 
 
@@ -127,7 +128,8 @@ class ChatService:
         # Generate AI response
 
         response = chat_chain(
-            ai_messages
+            messages=ai_messages,
+            db=self.db,
         )
 
 
