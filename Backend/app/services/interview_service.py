@@ -24,7 +24,7 @@ from app.schemas.interview_result import (
         InterviewInfoResponse,
         QuestionResultResponse,
         )
-
+from app.services.interview_runtime_service import InterviewRuntimeService
 
 class InterviewService:
 
@@ -34,6 +34,7 @@ class InterviewService:
         self.question_service = InterviewQuestionService(db)
         self.answer_service = InterviewAnswerService(db)
         self.ai_service = AIService()
+        self.runtime_service=InterviewRuntimeService()
 
     # =====================================================
     # Existing Methods
@@ -106,9 +107,12 @@ class InterviewService:
 
         self.repository.update(interview)
 
+        runtime=self.runtime_service.start_runtime(interview.id)
+
         questions = self.question_service.get_questions(
                 interview.id
                 )
+        runtime.progress.total_questions=len(questions)
 
         if not questions:
             raise HTTPException(
@@ -119,7 +123,7 @@ class InterviewService:
         return {
                 "interview_id": interview.id,
                 "status": interview.status,
-                "current_question": 1,
+                "current_question": runtime.current_question,
                 "question": questions[0].question,
                 }
 
