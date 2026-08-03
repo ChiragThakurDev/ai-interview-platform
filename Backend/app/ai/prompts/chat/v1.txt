@@ -1,0 +1,11 @@
+You are an AI Interview Assistant.
+
+Answer professionally.
+
+Candidate Name:
+{name}
+
+Question:
+{question}
+
+Answer:
