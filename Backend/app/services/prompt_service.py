@@ -1,10 +1,14 @@
 import logging
+import time
 
 from sqlalchemy.orm import Session
 
 from app.ai.templates.renderer import PromptRenderer
+from app.ai.llm import get_llm
+
 from app.models.prompt import Prompt
 from app.repositories.prompt_repository import PromptRepository
+from app.services.prompt_execution_service import PromptExecutionService
 
 
 logger = logging.getLogger(__name__)
@@ -17,6 +21,8 @@ class PromptService:
         db: Session,
     ):
         self.repository = PromptRepository(db)
+        self.execution_service = PromptExecutionService(db)
+
 
     # =====================================================
     # Get Active Prompt
@@ -27,6 +33,8 @@ class PromptService:
         name: str,
     ):
         return self.repository.get_active(name)
+
+
 
     # =====================================================
     # Build Prompt
@@ -46,15 +54,102 @@ class PromptService:
             )
 
         try:
+
             return PromptRenderer.render(
                 prompt.template,
                 **variables,
             )
 
         except KeyError as e:
+
             raise ValueError(
                 f"Missing prompt variable: {e}"
             )
+
+
+
+    # =====================================================
+    # Execute Prompt
+    # =====================================================
+
+    def execute_prompt(
+        self,
+        name: str,
+        variables: dict,
+        user_id: int | None = None,
+    ):
+
+        start_time = time.time()
+
+        prompt = self.repository.get_active(name)
+
+        if prompt is None:
+            raise ValueError(
+                f"No active prompt found: {name}"
+            )
+
+
+        rendered_prompt = PromptRenderer.render(
+            prompt.template,
+            **variables,
+        )
+
+
+        try:
+
+            llm = get_llm(
+                model=prompt.model,
+                temperature=prompt.temperature
+            )
+
+
+            response = llm.invoke(
+                rendered_prompt
+            )
+
+
+            latency = int(
+                (time.time() - start_time) * 1000
+            )
+
+
+            self.execution_service.create_log(
+                prompt_id=prompt.id,
+                user_id=user_id,
+                input_text=rendered_prompt,
+                output_text=response.content,
+                latency_ms=latency,
+                status="success",
+            )
+
+
+            return response.content
+
+
+
+        except Exception as e:
+
+
+            latency = int(
+                (time.time() - start_time) * 1000
+            )
+
+
+            self.execution_service.create_log(
+                prompt_id=prompt.id,
+                user_id=user_id,
+                input_text=rendered_prompt,
+                output_text=str(e),
+                latency_ms=latency,
+                status="failed",
+            )
+
+
+            logger.exception(e)
+
+            raise
+
+
 
     # =====================================================
     # Create Prompt Version
@@ -71,8 +166,10 @@ class PromptService:
         is_active: bool = False,
     ):
 
+
         if is_active:
             self.repository.deactivate_versions(name)
+
 
         prompt = Prompt(
             name=name,
@@ -84,7 +181,10 @@ class PromptService:
             is_active=is_active,
         )
 
+
         return self.repository.create(prompt)
+
+
 
     # =====================================================
     # Activate Prompt Version
@@ -95,10 +195,13 @@ class PromptService:
         name: str,
         version: str,
     ):
+
         return self.repository.activate_version(
             name,
             version,
         )
+
+
 
     # =====================================================
     # Prompt History
@@ -108,7 +211,10 @@ class PromptService:
         self,
         name: str,
     ):
+
         return self.repository.get_all_versions(name)
+
+
 
     # =====================================================
     # Delete Prompt Version
@@ -119,14 +225,18 @@ class PromptService:
         name: str,
         version: str,
     ):
+
         prompt = self.repository.get_version(
             name,
             version,
         )
 
+
         if prompt is None:
             return None
 
+
         self.repository.delete(prompt)
+
 
         return True
