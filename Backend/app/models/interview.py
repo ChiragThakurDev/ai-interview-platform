@@ -103,7 +103,7 @@ class Interview(Base):
     score = Column(
         Integer,
         nullable=False,
-        default=0,
+        default="0",
         server_default="0",
     )
 
@@ -183,6 +183,18 @@ class Interview(Base):
 
     session = relationship(
         "InterviewSession",
+        back_populates="interview",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+
+    # ==========================================
+    # LiveKit Video Interview Room
+    # ==========================================
+
+    room = relationship(
+        "InterviewRoom",
         back_populates="interview",
         uselist=False,
         cascade="all, delete-orphan",
