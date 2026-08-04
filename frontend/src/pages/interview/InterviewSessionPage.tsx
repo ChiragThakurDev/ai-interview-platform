@@ -1,12 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Brain, AlertCircle, Mic, MicOff, Volume2, Clock, CheckCircle2, Award } from 'lucide-react'
+import { Send, Brain, Mic, MicOff, Volume2, Clock, CheckCircle2, Award, Tag } from 'lucide-react'
 import {
   useStartInterview,
   useCurrentQuestion,
   useSubmitAnswer,
-  useFinishInterview,
 } from '@/hooks'
 import { Card, Button, ProgressBar, Spinner, Badge } from '@/components/ui'
 import { showToast } from '@/components/ui/Toast'
@@ -30,7 +29,6 @@ export const InterviewSessionPage = () => {
   const [timeLeft, setTimeLeft] = useState(180) // 3 minutes per question timer
 
   const { mutate: startInterview, isPending: starting } = useStartInterview()
-  const { mutate: finishInterviewFn } = useFinishInterview()
   const {
     data: currentQ,
     isLoading: loadingQ,
@@ -92,17 +90,8 @@ export const InterviewSessionPage = () => {
 
           if (res.interview_completed) {
             setCompleted(true)
-            finishInterviewFn(id, {
-              onSuccess: () => {
-                showToast('success', 'Interview complete! Generating report…')
-                setTimeout(() => navigate(`/interview/${id}/report`), 1800)
-              },
-              onError: () => {
-                // finish may have already been called — navigate anyway
-                showToast('success', 'Interview complete!')
-                setTimeout(() => navigate(`/interview/${id}/report`), 1800)
-              },
-            })
+            showToast('success', 'Interview complete! Generating report…')
+            setTimeout(() => navigate(`/interview/${id}/report`), 1800)
           } else {
             refetchQ()
           }
@@ -289,9 +278,28 @@ export const InterviewSessionPage = () => {
         ) : currentQ ? (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-semibold text-brand-500 uppercase tracking-wider">
-                Question {questionCount} of {totalQuestions}
-              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-brand-500 uppercase tracking-wider">
+                  Question {questionCount} of {totalQuestions}
+                </span>
+                {currentQ.category && (
+                  <Badge variant="default" size="xs">
+                    <Tag size={9} className="mr-1" />{currentQ.category}
+                  </Badge>
+                )}
+                {currentQ.difficulty && (
+                  <Badge
+                    variant={
+                      currentQ.difficulty.toLowerCase() === 'easy' ? 'success'
+                      : currentQ.difficulty.toLowerCase() === 'hard' ? 'error'
+                      : 'warning'
+                    }
+                    size="xs"
+                  >
+                    {currentQ.difficulty}
+                  </Badge>
+                )}
+              </div>
               <button
                 onClick={readQuestionAloud}
                 className="flex items-center gap-1.5 text-xs font-semibold dark:text-neutral-400 text-neutral-500 hover:text-brand-500 transition-colors p-1.5 rounded-lg dark:hover:bg-surface-hover hover:bg-lsurface-hover"

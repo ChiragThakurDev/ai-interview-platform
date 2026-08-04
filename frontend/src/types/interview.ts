@@ -13,6 +13,8 @@ export interface Interview {
   title: string
   role: string
   difficulty: string
+  status: string
+  score: number | null
   created_at: string
 }
 
@@ -35,9 +37,12 @@ export interface StartInterviewResponse {
 
 export interface CurrentQuestionResponse {
   interview_id: number
+  question_id: number
   current_question: number
   total_questions: number
   question: string
+  category: string
+  difficulty: string
 }
 
 export interface SubmitAnswerRequest {
@@ -66,6 +71,8 @@ export interface FinishInterviewResponse {
 export interface QuestionResultResponse {
   id: number
   question: string
+  category: string
+  difficulty: string
   answer: string | null
   score: number | null        // float from backend
   feedback: string | null
@@ -79,19 +86,12 @@ export interface InterviewInfoResponse {
   created_at: string
 }
 
-// Embedded report inside /results  (schema: interview_result.InterviewReportResponse)
-export interface InterviewReportInResult {
-  overall_score: number | null
-  strengths: string | null
-  weaknesses: string | null
-  recommendations: string | null
-  summary: string | null
-}
-
 export interface InterviewResult {
   interview: InterviewInfoResponse
+  average_score: number
+  total_questions: number
   questions: QuestionResultResponse[]
-  report: InterviewReportInResult | null
+  report: InterviewReport | null
 }
 
 // ── Full report  GET /interview/{id}/report ───────────────────────────────────

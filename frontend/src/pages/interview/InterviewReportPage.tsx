@@ -50,10 +50,12 @@ const ScoreRing = ({ score }: { score: number }) => {
 
 // ── Question row (expandable) ─────────────────────────────────────────────────
 const QuestionRow = ({
-  idx, question, answer, score, feedback,
+  idx, question, category, difficulty, answer, score, feedback,
 }: {
   idx: number
   question: string
+  category: string
+  difficulty: string
   answer: string | null
   score: number | null
   feedback: string | null
@@ -76,7 +78,26 @@ const QuestionRow = ({
           <span className="w-7 h-7 rounded-xl dark:bg-surface-raised bg-neutral-100 flex items-center justify-center text-xs font-bold text-brand-500 shrink-0">
             {idx + 1}
           </span>
-          <p className="text-xs sm:text-sm font-semibold dark:text-neutral-200 text-neutral-800 truncate">{question}</p>
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm font-semibold dark:text-neutral-200 text-neutral-800 truncate">{question}</p>
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              {category && (
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md dark:bg-surface-raised bg-neutral-100 dark:text-neutral-400 text-neutral-500">
+                  {category}
+                </span>
+              )}
+              {difficulty && (
+                <span className={cn(
+                  'text-[10px] font-semibold px-1.5 py-0.5 rounded-md',
+                  difficulty.toLowerCase() === 'easy'   ? 'bg-emerald-500/10 text-emerald-400' :
+                  difficulty.toLowerCase() === 'hard'   ? 'bg-red-500/10 text-red-400' :
+                                                          'bg-amber-500/10 text-amber-400'
+                )}>
+                  {difficulty}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {score != null ? (
@@ -212,6 +233,8 @@ export const InterviewReportPage = () => {
   const weaknesses: string[] = Array.isArray(report.weaknesses) ? report.weaknesses : []
   const questions = results?.questions ?? []
   const interviewInfo = results?.interview
+  const averageScore = results?.average_score ?? null
+  const totalQuestions = results?.total_questions ?? questions.length
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
@@ -245,6 +268,12 @@ export const InterviewReportPage = () => {
               <h2 className="text-lg font-black dark:text-neutral-100 text-neutral-900">
                 Overall: <span className={scoreColor(report.overall_score)}>{report.overall_score}/100</span>
               </h2>
+              {averageScore != null && (
+                <span className="text-xs font-semibold dark:text-neutral-400 text-neutral-500">
+                  Avg: <span className={scoreColor(Math.round(averageScore))}>{Math.round(averageScore)}</span>
+                  {totalQuestions > 0 && <span className="ml-1 dark:text-neutral-500 text-neutral-400">· {totalQuestions} questions</span>}
+                </span>
+              )}
               {report.technical_level && (
                 <Badge variant="primary" size="xs">{report.technical_level}</Badge>
               )}
@@ -341,8 +370,15 @@ export const InterviewReportPage = () => {
           <div className="space-y-3">
             {questions.map((q, i) => (
               <motion.div key={q.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                <QuestionRow idx={i} question={q.question} answer={q.answer}
-                  score={q.score != null ? Math.round(q.score) : null} feedback={q.feedback} />
+                <QuestionRow
+                  idx={i}
+                  question={q.question}
+                  category={q.category}
+                  difficulty={q.difficulty}
+                  answer={q.answer}
+                  score={q.score != null ? Math.round(q.score) : null}
+                  feedback={q.feedback}
+                />
               </motion.div>
             ))}
           </div>

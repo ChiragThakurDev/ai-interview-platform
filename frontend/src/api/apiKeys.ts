@@ -53,3 +53,32 @@ export const getApiKeyProfile = async () => {
   const { data } = await apiClient.get('/api-keys/profile')
   return data
 }
+
+export interface ApiKeyPermissionResponse {
+  message: string
+  permission?: string
+  permissions?: string
+}
+
+export interface ApiKeyLimitedResponse {
+  message: string
+  api_key: string
+}
+
+// GET /api-keys/protected
+export const getApiKeyProtected = async (): Promise<ApiKeyPermissionResponse> => {
+  const { data } = await apiClient.get<ApiKeyPermissionResponse>('/api-keys/protected')
+  return data
+}
+
+// GET /api-keys/write-test
+export const getApiKeyWriteTest = async (): Promise<ApiKeyPermissionResponse> => {
+  const { data } = await apiClient.get<ApiKeyPermissionResponse>('/api-keys/write-test')
+  return data
+}
+
+// GET /api-keys/limited
+export const getApiKeyLimited = async (): Promise<ApiKeyLimitedResponse> => {
+  const { data } = await apiClient.get<ApiKeyLimitedResponse>('/api-keys/limited')
+  return data
+}

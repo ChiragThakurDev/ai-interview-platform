@@ -1,6 +1,10 @@
 import os
 import shutil
+from pathlib import Path
+from uuid import uuid4
+
 from fastapi import HTTPException
+from starlette.datastructures import UploadFile as StarletteUploadFile
 
 from fastapi.responses import FileResponse
 
@@ -30,6 +34,23 @@ router = APIRouter(
 UPLOAD_DIR = "uploads/resumes"
 
 
+def build_upload_path(
+    filename: str,
+) -> Path:
+    original_name = Path(filename or "resume").name
+    suffix = Path(original_name).suffix
+    safe_stem = (
+        Path(original_name)
+        .stem
+        .replace(" ", "_")
+    )
+
+    if not safe_stem:
+        safe_stem = "resume"
+
+    return Path(UPLOAD_DIR) / f"{safe_stem}_{uuid4().hex}{suffix}"
+
+
 @router.post(
     "/upload",
     response_model=ResumeResponse
@@ -40,19 +61,28 @@ def upload_resume(
     current_user: User = Depends(get_current_user)
 ):
 
-    os.makedirs(
-        UPLOAD_DIR,
-        exist_ok=True
+    upload_dir = Path(UPLOAD_DIR)
+
+    upload_dir.mkdir(
+        parents=True,
+        exist_ok=True,
     )
 
+    file_path = build_upload_path(
+        file.filename
+    )
 
-    file_path = f"{UPLOAD_DIR}/{file.filename}"
+    try:
+        with file_path.open("wb") as buffer:
+            shutil.copyfileobj(
+                file.file,
+                buffer
+            )
 
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(
-            file.file,
-            buffer
+    except PermissionError:
+        raise HTTPException(
+            status_code=500,
+            detail="Upload directory is not writable",
         )
 
 
@@ -61,8 +91,8 @@ def upload_resume(
 
     return service.create_resume(
         filename=file.filename,
-        file_path=file_path,
-        file_size=os.path.getsize(file_path),
+        file_path=str(file_path),
+        file_size=file_path.stat().st_size,
         content_type=file.content_type,
         user_id=current_user.id
     )

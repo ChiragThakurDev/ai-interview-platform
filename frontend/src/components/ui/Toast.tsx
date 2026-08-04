@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, createContext, useContext } from 'react'
+import { useState, useEffect, useCallback, createContext, useContext, forwardRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react'
@@ -24,37 +24,41 @@ const BORDERS: Record<ToastType, string> = {
   info:    'border-l-blue-500',
 }
 
-const ToastItemComponent = ({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: string) => void }) => {
-  useEffect(() => {
-    const t = setTimeout(() => onDismiss(toast.id), toast.duration ?? 4000)
-    return () => clearTimeout(t)
-  }, [toast, onDismiss])
+const ToastItemComponent = forwardRef<HTMLDivElement, { toast: ToastItem; onDismiss: (id: string) => void }>(
+  ({ toast, onDismiss }, ref) => {
+    useEffect(() => {
+      const t = setTimeout(() => onDismiss(toast.id), toast.duration ?? 4000)
+      return () => clearTimeout(t)
+    }, [toast, onDismiss])
 
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, x: 40 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={  { opacity: 0, x: 40 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      className={cn(
-        'flex items-start gap-2.5 px-3.5 py-3 rounded-md border border-l-2 shadow-lg pointer-events-auto',
-        'dark:bg-surface-card dark:border-surface-border bg-white border-neutral-200',
-        'max-w-xs w-full',
-        BORDERS[toast.type]
-      )}
-    >
-      <span className="mt-px">{ICONS[toast.type]}</span>
-      <p className="text-xs dark:text-neutral-200 text-neutral-800 leading-relaxed flex-1">{toast.message}</p>
-      <button
-        onClick={() => onDismiss(toast.id)}
-        className="shrink-0 dark:text-neutral-600 text-neutral-400 dark:hover:text-neutral-300 hover:text-neutral-700 transition-colors ml-1"
+    return (
+      <motion.div
+        ref={ref}
+        layout
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={  { opacity: 0, x: 40 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className={cn(
+          'flex items-start gap-2.5 px-3.5 py-3 rounded-md border border-l-2 shadow-lg pointer-events-auto',
+          'dark:bg-surface-card dark:border-surface-border bg-white border-neutral-200',
+          'max-w-xs w-full',
+          BORDERS[toast.type]
+        )}
       >
-        <X size={13} />
-      </button>
-    </motion.div>
-  )
-}
+        <span className="mt-px">{ICONS[toast.type]}</span>
+        <p className="text-xs dark:text-neutral-200 text-neutral-800 leading-relaxed flex-1">{toast.message}</p>
+        <button
+          onClick={() => onDismiss(toast.id)}
+          className="shrink-0 dark:text-neutral-600 text-neutral-400 dark:hover:text-neutral-300 hover:text-neutral-700 transition-colors ml-1"
+        >
+          <X size={13} />
+        </button>
+      </motion.div>
+    )
+  }
+)
+ToastItemComponent.displayName = 'ToastItem'
 
 export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const [toasts, setToasts] = useState<ToastItem[]>([])

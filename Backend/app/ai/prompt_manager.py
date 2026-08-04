@@ -24,7 +24,6 @@ from app.ai.templates.renderer import PromptRenderer
 from app.ai.templates.registry import (
     PROMPT_TEMPLATE_REGISTRY,
 )
-
 from app.ai.prompts import (
     RESUME_ANALYSIS_PROMPT,
     INTERVIEW_GENERATION_PROMPT,
@@ -38,10 +37,8 @@ from app.ai.prompts import (
     CODING_INTERVIEW_REPORT_PROMPT,
 )
 
-from app.repositories.prompt_repository import PromptRepository
 from app.services.prompt_service import PromptService
 from app.ai.prompt_loader import PromptLoader
-
 
 logger = logging.getLogger(__name__)
 
@@ -145,9 +142,7 @@ class PromptManager:
 
         if db is not None:
 
-            repository = PromptRepository(db)
-
-            service = PromptService(repository)
+            service = PromptService(db)
 
             loader = PromptLoader(service)
 

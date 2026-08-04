@@ -11,10 +11,8 @@ from langchain_core.messages import (
 
 from app.ai.factory import AIFactory
 from app.ai.prompt_loader import PromptLoader
+from app.ai.prompt_manager import PromptManager
 
-from app.repositories.prompt_repository import (
-    PromptRepository,
-)
 from app.repositories.prompt_execution_repository import (
     PromptExecutionRepository,
 )
@@ -41,8 +39,7 @@ def chat_chain(
     prompt = None
     system_prompt = ""
 
-    prompt_repository = PromptRepository(db)
-    prompt_service = PromptService(prompt_repository)
+    prompt_service = PromptService(db)
 
     execution_repository = PromptExecutionRepository(db)
     execution_service = PromptExecutionService(
@@ -62,25 +59,38 @@ def chat_chain(
         # Load active prompt
         # -----------------------------
 
-        prompt = prompt_service.get_active_prompt(
-            "chat"
+        latest_user_message = next(
+            (
+                message.get("content", "")
+                for message in reversed(messages)
+                if message.get("role") == "user"
+            ),
+            "",
         )
 
-        if prompt is None:
-            raise ValueError(
-                "No active chat prompt found."
-            )
+        variables = {
+            "name": "Candidate",
+            "question": latest_user_message,
+        }
+
+        prompt = prompt_service.get_active_prompt(
+            "chat_system"
+        )
 
         prompt_loader = PromptLoader(
             prompt_service
         )
 
-        variables = {}
-
-        system_prompt = prompt_loader.load(
-            name="chat",
-            variables=variables,
-        )
+        if prompt is not None:
+            system_prompt = prompt_loader.load(
+                name="chat_system",
+                variables=variables,
+            )
+        else:
+            system_prompt = PromptManager.build(
+                "chat_system",
+                **variables,
+            )
 
         # -----------------------------
         # Build LangChain messages
@@ -157,7 +167,7 @@ def chat_chain(
 
                 execution_service.log_execution(
                     prompt=prompt,
-                    variables={},
+                    variables=variables,
                     rendered_prompt=system_prompt,
                     response=str(e),
                     success=False,

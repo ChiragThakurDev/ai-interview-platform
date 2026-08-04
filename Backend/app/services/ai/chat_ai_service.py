@@ -7,7 +7,7 @@ from langchain_core.messages import (
 )
 
 from app.ai.factory import AIFactory
-from app.repositories.prompt_repository import PromptRepository
+from app.ai.prompt_manager import PromptManager
 from app.services.prompt_service import PromptService
 
 
@@ -27,7 +27,7 @@ class ChatAIService:
         self.llm = self.provider.llm
 
         self.prompt_service = PromptService(
-            PromptRepository(db)
+            db
         )
 
     def chat(
@@ -48,10 +48,30 @@ class ChatAIService:
             AI response string.
         """
 
-        system_prompt = self.prompt_service.build_prompt(
-            name="chat",
-            variables={}
+        latest_user_message = next(
+            (
+                message.get("content", "")
+                for message in reversed(messages)
+                if message.get("role") == "user"
+            ),
+            "",
         )
+
+        variables = {
+            "name": "Candidate",
+            "question": latest_user_message,
+        }
+
+        try:
+            system_prompt = self.prompt_service.build_prompt(
+                name="chat_system",
+                variables=variables,
+            )
+        except ValueError:
+            system_prompt = PromptManager.build(
+                "chat_system",
+                **variables,
+            )
 
         langchain_messages = [
             SystemMessage(

@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Brain, Map, CheckCircle, XCircle, Lightbulb, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Brain, Map, CheckCircle, XCircle, Lightbulb, RefreshCw, Sparkles, Target } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { analyzeResume, generateRoadmap } from '@/api'
 import { useSkillReport } from '@/hooks'
@@ -47,6 +47,38 @@ export const ResumeAnalysisPage = () => {
     onSuccess: () => showToast.success('Learning roadmap generated!'),
     onError:   () => showToast.error('Failed to generate roadmap.'),
   })
+
+  const buildRoadmapSource = () => {
+    if (skillReport) {
+      return [
+        skillReport.summary,
+        `Weak skills: ${skillReport.weak_skills.join(', ')}`,
+        `Recommended topics: ${skillReport.recommended_topics.join(', ')}`,
+      ].filter(Boolean).join('\n')
+    }
+
+    if (analysis) {
+      return [
+        analysis.summary,
+        `Weaknesses: ${analysis.weaknesses.join(', ')}`,
+        `Suggestions: ${analysis.suggestions.join(', ')}`,
+        `Target roles: ${analysis.recommended_roles.join(', ')}`,
+      ].filter(Boolean).join('\n')
+    }
+
+    return ''
+  }
+
+  const handleGenerateRoadmap = () => {
+    const source = buildRoadmapSource()
+
+    if (!source) {
+      showToast.error('Run resume analysis first.')
+      return
+    }
+
+    generateRoadmapMutation(source)
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
@@ -177,11 +209,51 @@ export const ResumeAnalysisPage = () => {
             )}
 
             {/* CTA to start interview */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Link to={`/interview?resumeId=${resumeId}`}>
                 <Button size="sm"><Brain size={13} /> Practice Interview</Button>
               </Link>
             </div>
+
+            <Card className="overflow-hidden border-0 dark:bg-gradient-to-br dark:from-surface-card dark:via-surface-raised dark:to-brand-950/30 bg-gradient-to-br from-white via-lsurface-raised to-brand-50 shadow-lg">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-5">
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="w-11 h-11 rounded-2xl bg-brand-500 text-white flex items-center justify-center shadow-lg shadow-brand-500/25 shrink-0">
+                    <Map size={21} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm font-bold dark:text-neutral-100 text-neutral-900">Learning Roadmap</p>
+                      <Badge variant="info" size="xs">AI Plan</Badge>
+                    </div>
+                    <p className="text-sm dark:text-neutral-300 text-neutral-600 leading-relaxed">
+                      Turn this analysis into a focused weekly plan with topics, weak areas, and interview prep milestones.
+                    </p>
+                    <div className="grid sm:grid-cols-3 gap-2 mt-4">
+                      {[
+                        { icon: Target, label: 'Targets gaps' },
+                        { icon: Sparkles, label: 'Weekly focus' },
+                        { icon: CheckCircle, label: 'Prep ready' },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-center gap-2 rounded-lg dark:bg-surface-base/70 bg-white/75 px-3 py-2 text-xs font-semibold dark:text-neutral-300 text-neutral-700 border dark:border-surface-border border-lsurface-border">
+                          <item.icon size={13} className="text-brand-500" />
+                          {item.label}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  loading={generatingRoadmap}
+                  onClick={handleGenerateRoadmap}
+                  className="lg:self-center"
+                >
+                  <Sparkles size={13} /> Generate Roadmap
+                </Button>
+              </div>
+            </Card>
           </div>
         )}
       </section>
@@ -245,16 +317,25 @@ export const ResumeAnalysisPage = () => {
               )}
             </Card>
 
-            {/* Generate Roadmap */}
             {!roadmap && (
-              <Button
-                variant="secondary"
-                size="sm"
-                loading={generatingRoadmap}
-                onClick={() => generateRoadmapMutation(skillReport.summary)}
-              >
-                <Map size={13} /> Generate Learning Roadmap
-              </Button>
+              <Card className="dark:bg-surface-raised bg-lsurface-raised">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold dark:text-neutral-100 text-neutral-900">Build a roadmap from this skill report</p>
+                    <p className="text-xs dark:text-neutral-400 text-neutral-500 mt-1">
+                      Uses weak skills and recommended topics for a more personalized plan.
+                    </p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    loading={generatingRoadmap}
+                    onClick={handleGenerateRoadmap}
+                  >
+                    <Map size={13} /> Generate
+                  </Button>
+                </div>
+              </Card>
             )}
           </div>
         )}

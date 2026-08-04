@@ -47,6 +47,13 @@ PROMPT_TEMPLATE_REGISTRY = {
     },
 
 
+    "skill_analysis": {
+        "variables": [
+            "results"
+        ]
+    },
+
+
     # ============================
     # Coding Interview
     # ============================

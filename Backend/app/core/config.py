@@ -5,6 +5,8 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
+from pydantic import field_validator
+
 
 ENV_FILE = os.getenv(
     "ENV_FILE",
@@ -24,6 +26,34 @@ class Settings(BaseSettings):
 
     debug: bool = False
 
+
+    @field_validator("debug", mode="before")
+    @classmethod
+    def parse_debug(cls, value):
+
+        if isinstance(value, str):
+
+            normalized = value.strip().lower()
+
+            if normalized in {
+                "release",
+                "prod",
+                "production",
+            }:
+                return False
+
+
+            if normalized in {
+                "dev",
+                "development",
+            }:
+                return True
+
+
+        return value
+
+
+
     # ==============================
     # Frontend
     # ==============================
@@ -31,6 +61,8 @@ class Settings(BaseSettings):
     frontend_url: str = (
         "http://localhost:3000"
     )
+
+
 
     # ==============================
     # JWT Security
@@ -40,11 +72,15 @@ class Settings(BaseSettings):
 
     algorithm: str = "HS256"
 
+
+
     # ==============================
     # Database
     # ==============================
 
     database_url: str
+
+
 
     # ==============================
     # Token Expiry
@@ -58,6 +94,8 @@ class Settings(BaseSettings):
 
     password_reset_expire_minutes: int = 15
 
+
+
     # ==============================
     # Redis
     # ==============================
@@ -65,6 +103,8 @@ class Settings(BaseSettings):
     redis_url: str = (
         "redis://localhost:6379/0"
     )
+
+
 
     # ==============================
     # SMTP Email
@@ -80,47 +120,52 @@ class Settings(BaseSettings):
 
     smtp_password: str
 
+
+
     # ==================================================
     # AI Configuration
     # ==================================================
 
-    # Provider
     ai_provider: str = "ollama"
 
-    # Ollama Server
+
     ollama_url: str = (
-        "http://host.docker.internal:11434"
+        "http://localhost:11434"
     )
 
-    # Chat Model
+
+    # Models
+
     chat_model: str = (
         "phi4-mini:latest"
     )
 
-    # Coding Model
+
     coding_model: str = (
         "qwen2.5-coder:3b"
     )
 
-    # Structured JSON Model
+
     json_model: str = (
         "qwen2.5-coder:3b"
     )
 
-    # Fast / Cheap Model
+
     fast_model: str = (
         "llama3.2:3b"
     )
 
-    # Embedding Model (Future)
+
     embedding_model: str = (
         "nomic-embed-text"
     )
 
-    # Vision Model (Future)
+
     vision_model: str = (
         "llava:7b"
     )
+
+
 
     # ==================================================
     # AI Generation Settings
@@ -134,9 +179,24 @@ class Settings(BaseSettings):
 
     fast_temperature: float = 0.3
 
+
     max_tokens: int = 4096
 
     request_timeout: int = 300
+
+
+
+    # ==================================================
+    # LiveKit Video Interview
+    # ==================================================
+
+    livekit_url: str
+
+    livekit_api_key: str
+
+    livekit_api_secret: str
+
+
 
     # ==============================
     # Pydantic Configuration
@@ -147,6 +207,7 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
 
 
 settings = Settings()

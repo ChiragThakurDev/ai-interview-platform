@@ -1,3 +1,7 @@
+import logging
+
+from pydantic import ValidationError
+
 from app.ai.factory import AIFactory
 from app.ai.parser import parse_json_response
 from app.ai.prompt_manager import PromptManager
@@ -9,6 +13,9 @@ from app.schemas.ai import (
 from app.schemas.interview_report import (
     AIInterviewReportResponse,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class ReportAIService:
@@ -94,7 +101,57 @@ class ReportAIService:
             response
         )
 
+        if not isinstance(data, dict):
+            data = {}
 
-        return AISkillReportResponse.model_validate(
-            data
-        )
+        try:
+            return AISkillReportResponse.model_validate(
+                data
+            )
+        except ValidationError as error:
+            logger.warning(
+                "Skill report response did not match schema: %s",
+                error,
+            )
+
+            return AISkillReportResponse(
+                strong_skills=_as_list(
+                    data.get("strong_skills")
+                ),
+                weak_skills=_as_list(
+                    data.get("weak_skills")
+                ) or [
+                    "Technical communication",
+                    "Problem decomposition",
+                ],
+                recommended_topics=_as_list(
+                    data.get("recommended_topics")
+                ) or [
+                    "Review interview feedback",
+                    "Practice targeted coding questions",
+                    "Strengthen system design fundamentals",
+                ],
+                summary=(
+                    data.get("summary")
+                    if isinstance(data.get("summary"), str)
+                    else (
+                        "The AI response did not match the expected skill "
+                        "report format, so a fallback roadmap-ready summary "
+                        "was generated from the available interview data."
+                    )
+                ),
+            )
+
+
+def _as_list(value) -> list[str]:
+    if isinstance(value, list):
+        return [
+            str(item)
+            for item in value
+            if str(item).strip()
+        ]
+
+    if isinstance(value, str) and value.strip():
+        return [value.strip()]
+
+    return []

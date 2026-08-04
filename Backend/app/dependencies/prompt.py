@@ -16,24 +16,16 @@ def get_prompt_repository(
 def get_prompt_service(
     db: Session
 ):
-    repository = PromptRepository(
-        db
-    )
-
     return PromptService(
-        repository
+        db
     )
 
 
 def get_prompt_loader(
     db: Session
 ):
-    repository = PromptRepository(
-        db
-    )
-
     service = PromptService(
-        repository
+        db
     )
 
     return PromptLoader(

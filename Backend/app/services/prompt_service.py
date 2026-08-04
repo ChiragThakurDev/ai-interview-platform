@@ -8,6 +8,7 @@ from app.ai.llm import get_llm
 
 from app.models.prompt import Prompt
 from app.repositories.prompt_repository import PromptRepository
+from app.repositories.prompt_execution_repository import PromptExecutionRepository
 from app.services.prompt_execution_service import PromptExecutionService
 
 
@@ -21,7 +22,9 @@ class PromptService:
         db: Session,
     ):
         self.repository = PromptRepository(db)
-        self.execution_service = PromptExecutionService(db)
+        self.execution_service = PromptExecutionService(
+            PromptExecutionRepository(db)
+        )
 
 
     # =====================================================
@@ -113,13 +116,14 @@ class PromptService:
             )
 
 
-            self.execution_service.create_log(
-                prompt_id=prompt.id,
+            self.execution_service.log_execution(
+                prompt=prompt,
+                variables=variables,
+                rendered_prompt=rendered_prompt,
+                response=response.content,
+                success=True,
                 user_id=user_id,
-                input_text=rendered_prompt,
-                output_text=response.content,
-                latency_ms=latency,
-                status="success",
+                latency=latency,
             )
 
 
@@ -135,13 +139,15 @@ class PromptService:
             )
 
 
-            self.execution_service.create_log(
-                prompt_id=prompt.id,
+            self.execution_service.log_execution(
+                prompt=prompt,
+                variables=variables,
+                rendered_prompt=rendered_prompt,
+                response=None,
+                success=False,
                 user_id=user_id,
-                input_text=rendered_prompt,
-                output_text=str(e),
-                latency_ms=latency,
-                status="failed",
+                latency=latency,
+                error=str(e),
             )
 
 

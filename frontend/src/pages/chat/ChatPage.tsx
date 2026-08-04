@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageSquare, Plus, Send, Trash2, Mic, MicOff,
-  Volume2, Code, Brain, Terminal, Copy, Check, User, Bot, X,
+  Volume2, Code, Brain, Terminal, Copy, Check, User, Bot, X, Map,
 } from 'lucide-react'
 import {
   useChatSessions, useChatMessages, useCreateChatSession,
@@ -16,6 +16,7 @@ const QUICK_PROMPTS = [
   { icon: Brain,    label: 'System Design', prompt: 'Walk me through designing a real-time notification system like Slack.' },
   { icon: Code,     label: 'DSA Prep',       prompt: 'Explain the difference between Dynamic Programming and Greedy algorithms with examples.' },
   { icon: Terminal, label: 'Behavioral',      prompt: 'How do I answer "Tell me about a time you had a conflict" using the STAR method?' },
+  { icon: Map,      label: 'Roadmap',         prompt: 'Create a 4-week interview prep roadmap for backend engineering with daily practice goals.' },
   { icon: Brain,    label: 'Resume Tips',     prompt: 'What key achievements should I highlight for a Senior Full Stack Engineer role?' },
 ]
 
