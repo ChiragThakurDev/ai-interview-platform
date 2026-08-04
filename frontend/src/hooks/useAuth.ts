@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { login as apiLogin, logout as apiLogout } from '@/api/auth'
 import { register as apiRegister, getMe } from '@/api/users'
 import { useAuthStore } from '@/store'
@@ -9,6 +9,7 @@ import type { RegisterRequest } from '@/types'
 export const useLogin = () => {
   const { setTokens, setUser } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -24,7 +25,10 @@ export const useLogin = () => {
         showToast.success('Logged in successfully!')
       }
       queryClient.invalidateQueries({ queryKey: ['me'] })
-      navigate('/dashboard')
+      // Redirect back to wherever the user was trying to go (e.g. /room/lrbiku)
+      const from = (location.state as { from?: { pathname: string; search?: string } })?.from
+      const destination = from ? `${from.pathname}${from.search ?? ''}` : '/dashboard'
+      navigate(destination, { replace: true })
     },
     onError: (err: { response?: { data?: { detail?: string } } }) => {
       showToast.error(err?.response?.data?.detail ?? 'Login failed. Please try again.')

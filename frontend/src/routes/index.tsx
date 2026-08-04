@@ -20,6 +20,10 @@ import { ResumeAnalysisPage } from '@/pages/resume/ResumeAnalysisPage'
 import { InterviewSetupPage } from '@/pages/interview/InterviewSetupPage'
 import { InterviewSessionPage } from '@/pages/interview/InterviewSessionPage'
 import { InterviewReportPage } from '@/pages/interview/InterviewReportPage'
+import { LiveInterviewPage } from '@/pages/interview/LiveInterviewPage'
+
+import { VideoRoomLobbyPage } from '@/pages/video-room/VideoRoomLobbyPage'
+import { VideoRoomSessionPage } from '@/pages/video-room/VideoRoomSessionPage'
 
 import { CodingSetupPage } from '@/pages/coding/CodingSetupPage'
 import { CodingSessionPage } from '@/pages/coding/CodingSessionPage'
@@ -71,6 +75,11 @@ export const router = createBrowserRouter([
           { path: '/interview', element: <InterviewSetupPage /> },
           { path: '/interview/:interviewId/session', element: <InterviewSessionPage /> },
           { path: '/interview/:interviewId/report', element: <InterviewReportPage /> },
+          { path: '/interview/:id/live', element: <LiveInterviewPage /> },
+
+          // Standalone two-person video rooms
+          { path: '/video-room', element: <VideoRoomLobbyPage /> },
+          { path: '/room/:roomId', element: <VideoRoomSessionPage /> },
 
           // Coding interview
           { path: '/coding', element: <CodingSetupPage /> },

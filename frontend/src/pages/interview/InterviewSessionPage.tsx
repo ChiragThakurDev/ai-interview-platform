@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Brain, Mic, MicOff, Volume2, Clock, CheckCircle2, Award, Tag } from 'lucide-react'
+import { Send, Brain, Mic, MicOff, Volume2, Clock, CheckCircle2, Award, Tag, Video } from 'lucide-react'
 import {
   useStartInterview,
   useCurrentQuestion,
@@ -209,6 +209,17 @@ export const InterviewSessionPage = () => {
           </div>
 
           <Badge variant="primary" size="sm">Live Evaluation</Badge>
+
+          {/* ── Start Video Interview ── */}
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<Video size={13} />}
+            onClick={() => navigate(`/interview/${id}/live`)}
+            title="Join the live video interview room"
+          >
+            Video Interview
+          </Button>
         </div>
       </div>
 

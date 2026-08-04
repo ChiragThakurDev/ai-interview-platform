@@ -18,7 +18,8 @@ export const useMyInterviews = () =>
   useQuery({
     queryKey: ['interviews'],
     queryFn: getMyInterviews,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,               // always re-fetch — status changes mid-session
+    refetchOnWindowFocus: true,
   })
 
 export const useCreateInterview = () => {
@@ -39,7 +40,10 @@ export const useStartInterview = () => {
   return useMutation({
     mutationFn: (id: number) => startInterview(id),
     onSuccess: (_, id) => {
+      // Invalidate both the single interview and the full list so
+      // History shows "In Progress" immediately after a session starts
       qc.invalidateQueries({ queryKey: ['interview', id] })
+      qc.invalidateQueries({ queryKey: ['interviews'] })
     },
     onError: () => showToast.error('Failed to start interview.'),
   })
@@ -58,8 +62,14 @@ export const useSubmitAnswer = () => {
   return useMutation({
     mutationFn: ({ interviewId, body }: { interviewId: number; body: SubmitAnswerRequest }) =>
       submitAnswer(interviewId, body),
-    onSuccess: (_, { interviewId }) => {
+    onSuccess: (data, { interviewId }) => {
       qc.invalidateQueries({ queryKey: ['interview', interviewId, 'current-question'] })
+      // When the last answer is submitted the backend marks the interview
+      // completed — flush the list cache so History reflects it instantly
+      if (data.interview_completed) {
+        qc.invalidateQueries({ queryKey: ['interviews'] })
+        qc.invalidateQueries({ queryKey: ['interview', interviewId] })
+      }
     },
     onError: () => showToast.error('Failed to submit answer.'),
   })
