@@ -17,12 +17,20 @@ class InterviewRoom(Base):
     __tablename__ = "interview_rooms"
 
 
+    # ==========================================
+    # Primary Key
+    # ==========================================
+
     id = Column(
         Integer,
         primary_key=True,
         index=True,
     )
 
+
+    # ==========================================
+    # Interview Relation
+    # ==========================================
 
     interview_id = Column(
         Integer,
@@ -35,6 +43,10 @@ class InterviewRoom(Base):
     )
 
 
+    # ==========================================
+    # LiveKit Room Details
+    # ==========================================
+
     room_name = Column(
         String,
         nullable=False,
@@ -42,12 +54,27 @@ class InterviewRoom(Base):
     )
 
 
-    status = Column(
+    livekit_url = Column(
         String,
-        default="waiting",
         nullable=False,
     )
 
+
+    # ==========================================
+    # Room Status
+    # ==========================================
+
+    status = Column(
+        String(20),
+        nullable=False,
+        default="waiting",
+        server_default="waiting",
+    )
+
+
+    # ==========================================
+    # Timing
+    # ==========================================
 
     started_at = Column(
         DateTime(timezone=True),
@@ -67,11 +94,19 @@ class InterviewRoom(Base):
     )
 
 
+    # ==========================================
+    # Created
+    # ==========================================
+
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
     )
 
+
+    # ==========================================
+    # Relationship
+    # ==========================================
 
     interview = relationship(
         "Interview",

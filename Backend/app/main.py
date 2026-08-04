@@ -55,7 +55,7 @@ from app.api import admin_prompt_logs
 
 
 from app.api.livekit import router as livekit_router
-
+from app.api.interview_room import router as interview_room_router
 
 logger.info(
     "Starting AI Interview Platform..."
@@ -215,6 +215,9 @@ app.include_router(
     livekit_router
 )
 
+app.include_router(
+    interview_room_router
+)
 
 # -------------------------
 # ROOT
