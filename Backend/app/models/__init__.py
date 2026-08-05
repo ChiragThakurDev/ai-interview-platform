@@ -33,3 +33,5 @@ from app.models.interview_session import InterviewSession
 from app.models.interview_room import InterviewRoom
 
 from app.models.interview_transcript import InterviewTranscript
+
+from app.models.interview_evaluation import InterviewEvaluation

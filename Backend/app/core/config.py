@@ -130,41 +130,51 @@ class Settings(BaseSettings):
 
 
     ollama_url: str = (
-        "http://localhost:11434"
+    "http://localhost:11434"
+    )
+
+
+    # Default general model
+    default_model: str = (
+     "llama3.1:8b"
     )
 
 
     # Models
 
     chat_model: str = (
-        "phi4-mini:latest"
+     "phi4-mini:latest"
     )
 
 
     coding_model: str = (
-        "qwen2.5-coder:3b"
+     "qwen2.5-coder:3b"
     )
 
 
     json_model: str = (
-        "qwen2.5-coder:3b"
+      "qwen2.5-coder:3b"
+    )
+
+
+    evaluation_model: str = (
+     "qwen2.5-coder:3b"
     )
 
 
     fast_model: str = (
-        "llama3.2:3b"
+     "llama3.2:3b"
     )
 
 
     embedding_model: str = (
-        "nomic-embed-text"
+     "nomic-embed-text"
     )
 
 
     vision_model: str = (
-        "llava:7b"
+      "llava:7b"
     )
-
 
 
     # ==================================================
