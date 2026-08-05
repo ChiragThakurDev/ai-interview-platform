@@ -15,17 +15,14 @@ class InterviewAIService:
     - Evaluate candidate answers
     - Generate scores
     - Provide feedback
-    - Generate follow-up questions
     - Generate final interview reports
     """
-
 
     def __init__(
         self,
         llm_service: LLMService,
     ):
         self.llm_service = llm_service
-
 
 
     # =====================================================
@@ -58,14 +55,12 @@ class InterviewAIService:
         try:
 
             response = self.llm_service.execute_json(
-                prompt_name="interview_answer_evaluation",
+                prompt_name="answer_evaluation",
                 variables=variables,
             )
 
 
-            result = self._parse_json(
-                response
-            )
+            result = self._parse_json(response)
 
 
             return self._normalize_evaluation(
@@ -73,10 +68,10 @@ class InterviewAIService:
             )
 
 
-        except Exception:
+        except Exception as e:
 
             logger.exception(
-                "AI answer evaluation failed"
+                f"AI answer evaluation failed: {str(e)}"
             )
 
 
@@ -85,7 +80,7 @@ class InterviewAIService:
 
 
     # =====================================================
-    # Follow Up Question Generation
+    # Follow Up Question
     # =====================================================
 
     def generate_follow_up(
@@ -113,10 +108,10 @@ class InterviewAIService:
             )
 
 
-        except Exception:
+        except Exception as e:
 
             logger.exception(
-                "Follow up generation failed"
+                f"Follow up generation failed: {str(e)}"
             )
 
 
@@ -140,7 +135,7 @@ class InterviewAIService:
 
         variables = {
 
-            "answers": json.dumps(
+            "results": json.dumps(
                 answers,
                 ensure_ascii=False,
                 indent=2,
@@ -152,43 +147,114 @@ class InterviewAIService:
         try:
 
             response = self.llm_service.execute_json(
-                prompt_name="interview_final_report",
+
+                prompt_name="interview_report",
+
                 variables=variables,
+
             )
 
 
-            return self._parse_json(
+            result = self._parse_json(
                 response
             )
 
 
-        except Exception:
-
-            logger.exception(
-                "Interview report generation failed"
+            return self._normalize_report(
+                result
             )
 
 
-            return {
+        except Exception as e:
 
-                "overall_score": 0,
+            logger.exception(
+                f"Interview report generation failed: {str(e)}"
+            )
 
-                "summary":
-                    "Unable to generate report",
 
-                "strengths": [],
-
-                "weaknesses": [],
-
-                "recommendation":
-                    "",
-
-            }
+            return self._default_report()
 
 
 
     # =====================================================
-    # Normalize Evaluation Response
+    # Normalize Report
+    # =====================================================
+
+    def _normalize_report(
+        self,
+        data: dict,
+    ) -> dict:
+
+
+        return {
+
+
+            "overall_score":
+                self._safe_score(
+                    data.get(
+                        "overall_score",
+                        0
+                    )
+                ),
+
+
+            "technical_level":
+                data.get(
+                    "technical_level",
+                    ""
+                ),
+
+
+            "communication":
+                data.get(
+                    "communication",
+                    ""
+                ),
+
+
+            "strengths":
+                data.get(
+                    "strengths",
+                    []
+                )
+                if isinstance(
+                    data.get("strengths", []),
+                    list
+                )
+                else [],
+
+
+            "weaknesses":
+                data.get(
+                    "weaknesses",
+                    []
+                )
+                if isinstance(
+                    data.get("weaknesses", []),
+                    list
+                )
+                else [],
+
+
+            "recommendation":
+                data.get(
+                    "recommendation",
+                    ""
+                ),
+
+
+            "summary":
+                data.get(
+                    "summary",
+                    ""
+                ),
+
+        }
+
+
+
+    # =====================================================
+    # Normalize Evaluation
     # =====================================================
 
     def _normalize_evaluation(
@@ -247,27 +313,21 @@ class InterviewAIService:
 
 
             "strengths":
-                data.get(
-                    "strengths",
-                    []
-                )
-                if isinstance(
-                    data.get("strengths", []),
-                    list
-                )
-                else [],
+                self._ensure_list(
+                    data.get(
+                        "strengths",
+                        []
+                    )
+                ),
 
 
             "weaknesses":
-                data.get(
-                    "weaknesses",
-                    []
-                )
-                if isinstance(
-                    data.get("weaknesses", []),
-                    list
-                )
-                else [],
+                self._ensure_list(
+                    data.get(
+                        "weaknesses",
+                        []
+                    )
+                ),
 
         }
 
@@ -279,15 +339,27 @@ class InterviewAIService:
 
     def _parse_json(
         self,
-        response: str | dict,
+        response,
     ) -> dict:
 
 
         if isinstance(
             response,
-            dict,
+            dict
         ):
             return response
+
+
+
+        if not isinstance(
+            response,
+            str
+        ):
+            return {}
+
+
+
+        response = response.strip()
 
 
 
@@ -297,31 +369,54 @@ class InterviewAIService:
                 response
             )
 
+        except Exception:
 
-        except json.JSONDecodeError:
+            pass
 
 
-            logger.warning(
-                "Invalid JSON received from LLM"
+
+        if "```json" in response:
+
+
+            cleaned = (
+
+                response
+                .replace(
+                    "```json",
+                    ""
+                )
+                .replace(
+                    "```",
+                    ""
+                )
+                .strip()
+
             )
 
 
-            return {
+            try:
 
-                "score":0,
+                return json.loads(
+                    cleaned
+                )
 
-                "feedback":response,
+            except Exception:
 
-                "strengths":[],
+                pass
 
-                "weaknesses":[],
 
-            }
+
+        logger.warning(
+            "Invalid JSON returned by LLM"
+        )
+
+
+        return {}
 
 
 
     # =====================================================
-    # Score Validator
+    # Helpers
     # =====================================================
 
     def _safe_score(
@@ -338,10 +433,12 @@ class InterviewAIService:
 
 
             if score < 0:
+
                 return 0
 
 
             if score > 100:
+
                 return 100
 
 
@@ -354,9 +451,59 @@ class InterviewAIService:
 
 
 
+    def _ensure_list(
+        self,
+        value,
+    ) -> list:
+
+
+        if isinstance(
+            value,
+            list
+        ):
+            return value
+
+
+        return []
+
+
+
     # =====================================================
-    # Default Response
+    # Default Responses
     # =====================================================
+
+    def _default_report(
+        self,
+    ) -> dict:
+
+
+        return {
+
+
+            "overall_score":0,
+
+
+            "technical_level":"",
+
+
+            "communication":"",
+
+
+            "strengths":[],
+
+
+            "weaknesses":[],
+
+
+            "recommendation":"",
+
+
+            "summary":
+                "AI report generation failed",
+
+        }
+
+
 
     def _default_evaluation(
         self,
@@ -365,19 +512,27 @@ class InterviewAIService:
 
         return {
 
+
             "score":0,
+
 
             "technical_score":0,
 
+
             "communication_score":0,
 
+
             "confidence_score":0,
+
 
             "feedback":
                 "Unable to evaluate answer",
 
+
             "strengths":[],
 
+
             "weaknesses":[],
+
 
         }

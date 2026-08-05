@@ -1,6 +1,7 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.interview_answer import InterviewAnswer
+from app.models.interview_question import InterviewQuestion
 
 
 class InterviewAnswerRepository:
@@ -8,13 +9,30 @@ class InterviewAnswerRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, interview_answer: InterviewAnswer):
+    # =====================================================
+    # Create
+    # =====================================================
+
+    def create(
+        self,
+        interview_answer: InterviewAnswer,
+    ) -> InterviewAnswer:
+
         self.db.add(interview_answer)
         self.db.commit()
         self.db.refresh(interview_answer)
+
         return interview_answer
 
-    def get_by_question(self, question_id: int):
+    # =====================================================
+    # Get By Question
+    # =====================================================
+
+    def get_by_question(
+        self,
+        question_id: int,
+    ) -> InterviewAnswer | None:
+
         return (
             self.db.query(InterviewAnswer)
             .filter(
@@ -23,13 +41,47 @@ class InterviewAnswerRepository:
             .first()
         )
 
+    # =====================================================
+    # Get All Answers For Interview
+    # =====================================================
+
+    def get_by_interview(
+        self,
+        interview_id: int,
+    ) -> list[InterviewAnswer]:
+
+        return (
+            self.db.query(InterviewAnswer)
+            .join(
+                InterviewQuestion,
+                InterviewAnswer.question_id == InterviewQuestion.id,
+            )
+            .options(
+                joinedload(
+                    InterviewAnswer.question
+                )
+            )
+            .filter(
+                InterviewQuestion.interview_id == interview_id
+            )
+            .order_by(
+                InterviewQuestion.id.asc()
+            )
+            .all()
+        )
+
+    # =====================================================
+    # Update
+    # =====================================================
+
     def update(
         self,
         interview_answer: InterviewAnswer,
         answer: str,
         score: int,
         feedback: str,
-    ):
+    ) -> InterviewAnswer:
+
         interview_answer.answer = answer
         interview_answer.score = score
         interview_answer.feedback = feedback
@@ -39,6 +91,14 @@ class InterviewAnswerRepository:
 
         return interview_answer
 
-    def delete(self, interview_answer: InterviewAnswer):
+    # =====================================================
+    # Delete
+    # =====================================================
+
+    def delete(
+        self,
+        interview_answer: InterviewAnswer,
+    ) -> None:
+
         self.db.delete(interview_answer)
         self.db.commit()
