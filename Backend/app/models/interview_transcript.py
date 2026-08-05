@@ -18,6 +18,7 @@ class InterviewTranscript(Base):
 
     __tablename__ = "interview_transcripts"
 
+
     # ==========================================
     # Primary Key
     # ==========================================
@@ -27,6 +28,7 @@ class InterviewTranscript(Base):
         primary_key=True,
         index=True,
     )
+
 
     # ==========================================
     # Foreign Keys
@@ -39,7 +41,9 @@ class InterviewTranscript(Base):
             ondelete="CASCADE",
         ),
         nullable=False,
+        index=True,
     )
+
 
     question_id = Column(
         Integer,
@@ -48,31 +52,39 @@ class InterviewTranscript(Base):
             ondelete="CASCADE",
         ),
         nullable=False,
+        index=True,
     )
 
+
     # ==========================================
-    # Transcript
+    # Transcript Information
     # ==========================================
 
     speaker = Column(
         String(20),
         nullable=False,
+        default="candidate",
+        server_default="candidate",
     )
+
 
     transcript = Column(
         Text,
         nullable=False,
     )
 
+
     confidence = Column(
         Float,
         nullable=True,
     )
 
+
     language = Column(
         String(20),
         nullable=True,
     )
+
 
     # ==========================================
     # Timing
@@ -80,18 +92,21 @@ class InterviewTranscript(Base):
 
     start_time = Column(
         Float,
-        nullable=True,
+        nullable=False,
     )
+
 
     end_time = Column(
         Float,
-        nullable=True,
+        nullable=False,
     )
+
 
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
     )
+
 
     # ==========================================
     # Relationships
@@ -101,6 +116,7 @@ class InterviewTranscript(Base):
         "Interview",
         back_populates="transcripts",
     )
+
 
     question = relationship(
         "InterviewQuestion",

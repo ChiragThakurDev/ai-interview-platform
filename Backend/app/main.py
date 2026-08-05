@@ -57,6 +57,19 @@ from app.api import admin_prompt_logs
 from app.api.livekit import router as livekit_router
 from app.api.interview_room import router as interview_room_router
 
+from app.api.transcript import router as transcript_router
+
+from app.api.speech import router as speech_router
+
+from app.api.interview_transcript import router as transcript_router
+
+from app.api.interview_transcript import router as interview_transcript_router
+
+
+from app.websocket.audio_stream import router as audio_router
+
+from app.api.interview_session import router as interview_session_router
+
 logger.info(
     "Starting AI Interview Platform..."
 )
@@ -193,6 +206,12 @@ app.include_router(
 )
 
 
+#Transcript implement
+
+app.include_router(
+    transcript_router,
+)
+
 # -------------------------
 # Prompt Management APIs
 # -------------------------
@@ -218,6 +237,26 @@ app.include_router(
 app.include_router(
     interview_room_router
 )
+
+app.include_router(speech_router)
+
+app.include_router(
+    transcript_router,
+)
+
+
+app.include_router(
+    interview_transcript_router,
+)
+
+app.include_router(
+    audio_router
+)
+
+app.include_router(
+    interview_session_router
+)
+
 
 # -------------------------
 # ROOT

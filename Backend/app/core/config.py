@@ -208,6 +208,22 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # ==============================
+    # Speech AI
+    # ==============================
+
+    speech_provider: str = "faster-whisper"
+
+    whisper_model: str = "base"
+
+    whisper_device: str = "auto"
+
+    whisper_compute_type: str = "int8"
+
+    transcript_language: str = "en"
+
+    enable_auto_language_detection: bool = True
+
 
 
 settings = Settings()
