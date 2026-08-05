@@ -31,3 +31,5 @@ from app.models.prompt_execution import PromptExecution
 from app.models.interview_session import InterviewSession
 
 from app.models.interview_room import InterviewRoom
+
+from app.models.interview_transcript import InterviewTranscript

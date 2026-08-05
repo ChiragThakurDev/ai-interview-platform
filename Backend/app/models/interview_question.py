@@ -60,3 +60,13 @@ class InterviewQuestion(Base):
 
             )
 
+    # ==========================================
+    # Speech Transcripts
+    # ==========================================
+
+    transcripts = relationship(
+      "InterviewTranscript",
+      back_populates="question",
+      cascade="all, delete-orphan",
+    )
+

@@ -199,3 +199,12 @@ class Interview(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    # ==========================================
+    # Interview Transcripts
+    # ==========================================
+
+    transcripts = relationship(
+     "InterviewTranscript",
+     back_populates="interview",
+     cascade="all, delete-orphan",
+    )
