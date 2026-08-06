@@ -36,15 +36,16 @@ export interface ProgressStats {
   trend: string
 }
 
-// GET /dashboard/skills  →  SkillReportResponse
-export interface SkillReport {
-  id: number
-  user_id: number
-  strong_skills: string[]
-  weak_skills: string[]
-  recommended_topics: string[]
-  summary: string
-  created_at: string
+export interface SkillItem {
+  skill_name: string
+  score: number
+  strengths: string[]
+  weaknesses: string[]
+  recommendations: string[]
+}
+
+export interface SkillReportResponse {
+  skills: SkillItem[]
 }
 
 // GET /dashboard/analytics  →  AnalyticsResponse

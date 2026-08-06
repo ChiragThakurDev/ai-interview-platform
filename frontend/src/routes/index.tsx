@@ -74,7 +74,7 @@ export const router = createBrowserRouter([
           // Technical interview
           { path: '/interview', element: <InterviewSetupPage /> },
           { path: '/interview/:interviewId/session', element: <InterviewSessionPage /> },
-          { path: '/interview/:interviewId/report', element: <InterviewReportPage /> },
+          { path: '/results/:interviewId', element: <InterviewReportPage /> },
           { path: '/interview/:id/live', element: <LiveInterviewPage /> },
 
           // Standalone two-person video rooms

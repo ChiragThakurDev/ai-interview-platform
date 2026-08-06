@@ -10,7 +10,6 @@ const schema = z.object({
   resumeId: z.string().min(1, 'Select a resume'),
   role: z.string().min(2, 'Role is required'),
   difficulty: z.enum(['easy', 'medium', 'hard']),
-  number_of_questions: z.coerce.number().min(3).max(20),
 })
 type FormValues = z.infer<typeof schema>
 
@@ -31,7 +30,6 @@ export const InterviewSetupPage = () => {
     defaultValues: {
       resumeId: defaultResumeId,
       difficulty: 'medium',
-      number_of_questions: 3,
     },
   })
 
@@ -42,7 +40,6 @@ export const InterviewSetupPage = () => {
         body: {
           role: data.role,
           difficulty: data.difficulty,
-          number_of_questions: data.number_of_questions,
         },
       },
       {
@@ -100,7 +97,7 @@ export const InterviewSetupPage = () => {
             {...register('role')}
           />
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-1 gap-4">
             <Select
               label="Evaluation Difficulty"
               options={[
@@ -110,16 +107,6 @@ export const InterviewSetupPage = () => {
               ]}
               error={errors.difficulty?.message}
               {...register('difficulty')}
-            />
-
-            <Input
-              label="Question Count"
-              type="number"
-              min={3}
-              max={20}
-              error={errors.number_of_questions?.message}
-              hint="3 to 20 questions"
-              {...register('number_of_questions')}
             />
           </div>
 

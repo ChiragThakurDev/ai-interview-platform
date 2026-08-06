@@ -3,7 +3,7 @@ import type {
   DashboardStats,
   PerformanceHistoryResponse,
   ProgressStats,
-  SkillReport,
+  SkillReportResponse,
   AnalyticsStats,
   TopicAnalysis,
 } from '@/types'
@@ -21,8 +21,8 @@ export const getPerformanceHistory = async (): Promise<PerformanceHistoryRespons
 }
 
 // GET /dashboard/skills  — AI skill report from interview history
-export const getSkillReport = async (): Promise<SkillReport> => {
-  const { data } = await apiClient.get<SkillReport>('/dashboard/skills')
+export const getSkillReport = async (): Promise<SkillReportResponse> => {
+  const { data } = await apiClient.get<SkillReportResponse>('/dashboard/skills')
   return data
 }
 

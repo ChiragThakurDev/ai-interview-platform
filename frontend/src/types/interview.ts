@@ -2,7 +2,6 @@
 export interface GenerateInterviewRequest {
   role: string
   difficulty: 'easy' | 'medium' | 'hard'
-  number_of_questions: number
 }
 
 // GET /interview/my  →  list[InterviewListResponse]
@@ -88,8 +87,6 @@ export interface InterviewInfoResponse {
 
 export interface InterviewResult {
   interview: InterviewInfoResponse
-  average_score: number
-  total_questions: number
   questions: QuestionResultResponse[]
   report: InterviewReport | null
 }

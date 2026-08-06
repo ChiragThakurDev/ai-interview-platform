@@ -1,5 +1,5 @@
 import axios from 'axios'
-
+import toast from 'react-hot-toast'
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
 export const apiClient = axios.create({
@@ -26,18 +26,27 @@ const processQueue = (err: unknown, token: string | null) => {
   failedQueue = []
 }
 
-// ── 401 interceptor: refresh once, queue other 401s, never hard-reload ───────
 apiClient.interceptors.response.use(
   response => response,
   async (error) => {
     const original = error.config
+    const status = error.response?.status
+
+    // Handle standard errors with toasts
+    if (status === 403) toast.error('Access forbidden (403)')
+    if (status === 404) toast.error('Resource not found (404)')
+    if (status >= 500) toast.error('Internal server error (' + status + ')')
 
     // Don't retry the refresh endpoint itself or already-retried requests
     if (
-      error.response?.status !== 401 ||
+      status !== 401 ||
       original._retry ||
       original.url?.includes('/auth/refresh')
     ) {
+      // Show toast for 401 if it's a login failure or if refresh fails
+      if (status === 401 && !original.url?.includes('/auth/refresh') && !original.url?.includes('/auth/login')) {
+         toast.error('Session expired or unauthorized (401)')
+      }
       return Promise.reject(error)
     }
 

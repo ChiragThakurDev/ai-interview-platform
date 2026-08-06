@@ -233,8 +233,8 @@ export const InterviewReportPage = () => {
   const weaknesses: string[] = Array.isArray(report.weaknesses) ? report.weaknesses : []
   const questions = results?.questions ?? []
   const interviewInfo = results?.interview
-  const averageScore = results?.average_score ?? null
-  const totalQuestions = results?.total_questions ?? questions.length
+  const averageScore = report?.overall_score ?? null
+  const totalQuestions = questions.length
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">

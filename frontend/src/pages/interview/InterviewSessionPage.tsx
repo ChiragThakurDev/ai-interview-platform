@@ -91,7 +91,7 @@ export const InterviewSessionPage = () => {
           if (res.interview_completed) {
             setCompleted(true)
             showToast('success', 'Interview complete! Generating report…')
-            setTimeout(() => navigate(`/interview/${id}/report`), 1800)
+            setTimeout(() => navigate(`/results/${id}`), 1800)
           } else {
             refetchQ()
           }
@@ -287,42 +287,50 @@ export const InterviewSessionPage = () => {
             <p className="text-xs dark:text-neutral-400 text-neutral-500">Loading question...</p>
           </div>
         ) : currentQ ? (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-semibold text-brand-500 uppercase tracking-wider">
-                  Question {questionCount} of {totalQuestions}
-                </span>
-                {currentQ.category && (
-                  <Badge variant="default" size="xs">
-                    <Tag size={9} className="mr-1" />{currentQ.category}
-                  </Badge>
-                )}
-                {currentQ.difficulty && (
-                  <Badge
-                    variant={
-                      currentQ.difficulty.toLowerCase() === 'easy' ? 'success'
-                      : currentQ.difficulty.toLowerCase() === 'hard' ? 'error'
-                      : 'warning'
-                    }
-                    size="xs"
-                  >
-                    {currentQ.difficulty}
-                  </Badge>
-                )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentQ.question}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-semibold text-brand-500 uppercase tracking-wider">
+                    Question {questionCount} of {totalQuestions}
+                  </span>
+                  {currentQ.category && (
+                    <Badge variant="default" size="xs">
+                      <Tag size={9} className="mr-1" />{currentQ.category}
+                    </Badge>
+                  )}
+                  {currentQ.difficulty && (
+                    <Badge
+                      variant={
+                        currentQ.difficulty.toLowerCase() === 'easy' ? 'success'
+                        : currentQ.difficulty.toLowerCase() === 'hard' ? 'error'
+                        : 'warning'
+                      }
+                      size="xs"
+                    >
+                      {currentQ.difficulty}
+                    </Badge>
+                  )}
+                </div>
+                <button
+                  onClick={readQuestionAloud}
+                  className="flex items-center gap-1.5 text-xs font-semibold dark:text-neutral-400 text-neutral-500 hover:text-brand-500 transition-colors p-1.5 rounded-lg dark:hover:bg-surface-hover hover:bg-lsurface-hover"
+                  title="Read question aloud"
+                >
+                  <Volume2 size={15} /> Read Aloud
+                </button>
               </div>
-              <button
-                onClick={readQuestionAloud}
-                className="flex items-center gap-1.5 text-xs font-semibold dark:text-neutral-400 text-neutral-500 hover:text-brand-500 transition-colors p-1.5 rounded-lg dark:hover:bg-surface-hover hover:bg-lsurface-hover"
-                title="Read question aloud"
-              >
-                <Volume2 size={15} /> Read Aloud
-              </button>
-            </div>
-            <p className="text-lg font-semibold dark:text-neutral-100 text-neutral-900 leading-relaxed">
-              {currentQ.question}
-            </p>
-          </div>
+              <p className="text-lg font-semibold dark:text-neutral-100 text-neutral-900 leading-relaxed">
+                {currentQ.question}
+              </p>
+            </motion.div>
+          </AnimatePresence>
         ) : null}
       </Card>
 

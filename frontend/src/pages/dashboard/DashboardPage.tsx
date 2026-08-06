@@ -184,7 +184,7 @@ export const DashboardPage = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke={axisColor} />
                     <XAxis dataKey="date" tick={{ fontSize: 10, fill: textColor }} axisLine={false} tickLine={false} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: textColor }} axisLine={false} tickLine={false} />
-                    <Tooltip {...TooltipStyle} formatter={(v: number) => [`${v}/100`, 'Score']} labelFormatter={l => `Date: ${l}`} />
+                    <Tooltip {...TooltipStyle} formatter={(v: any) => [`${v}/100`, 'Score'] as any} labelFormatter={l => `Date: ${l}`} />
                     <Area type="monotone" dataKey="score" stroke={BRAND} strokeWidth={2.5}
                       fill="url(#scoreGrad)" dot={<CustomDot />} activeDot={{ r: 5, fill: BRAND }} />
                   </AreaChart>
@@ -231,7 +231,7 @@ export const DashboardPage = () => {
                         <CartesianGrid strokeDasharray="3 3" stroke={axisColor} vertical={false} />
                         <XAxis dataKey="range" tick={{ fontSize: 9, fill: textColor }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 9, fill: textColor }} axisLine={false} tickLine={false} />
-                        <Tooltip {...TooltipStyle} formatter={(v: number) => [v, 'Interviews']} />
+                        <Tooltip {...TooltipStyle} formatter={(v: any) => [v, 'Interviews'] as any} />
                         <Bar dataKey="count" fill={PURPLE} radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -255,7 +255,7 @@ export const DashboardPage = () => {
                         <PolarGrid stroke={axisColor} />
                         <PolarAngleAxis dataKey="topic" tick={{ fontSize: 9, fill: textColor }} />
                         <Radar dataKey="score" stroke={CYAN} fill={CYAN} fillOpacity={0.18} strokeWidth={2} dot />
-                        <Tooltip {...TooltipStyle} formatter={(v: number) => [`${v}/100`, 'Score']} />
+                        <Tooltip {...TooltipStyle} formatter={(v: any) => [`${v}/100`, 'Score'] as any} />
                       </RadarChart>
                     </ResponsiveContainer>
                   </Card>
@@ -273,7 +273,7 @@ export const DashboardPage = () => {
                         <CartesianGrid strokeDasharray="3 3" stroke={axisColor} horizontal={false} />
                         <XAxis type="number" tick={{ fontSize: 9, fill: textColor }} axisLine={false} tickLine={false} />
                         <YAxis dataKey="role" type="category" width={90} tick={{ fontSize: 9, fill: textColor }} axisLine={false} tickLine={false} />
-                        <Tooltip {...TooltipStyle} formatter={(v: number) => [v, 'Interviews']} />
+                        <Tooltip {...TooltipStyle} formatter={(v: any) => [v, 'Interviews'] as any} />
                         <Bar dataKey="count" fill={GREEN} radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>

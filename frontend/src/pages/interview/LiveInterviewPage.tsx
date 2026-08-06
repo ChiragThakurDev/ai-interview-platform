@@ -246,7 +246,7 @@ export const LiveInterviewPage = () => {
             <Button
               variant="secondary"
               size="md"
-              onClick={() => navigate(`/interview/${interviewId}/report`)}
+              onClick={() => navigate(`/results/${interviewId}`)}
             >
               View Report
             </Button>

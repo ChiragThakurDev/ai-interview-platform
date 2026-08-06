@@ -288,7 +288,7 @@ export const HistoryPage = () => {
       score:      iv.score ?? null,
       duration:   (iv as { duration?: number }).duration ?? null,
       created_at: iv.created_at,
-      reportUrl:  `/interview/${iv.id}/report`,
+      reportUrl:  `/results/${iv.id}`,
       resumeUrl:  `/interview/${iv.id}/session`,
     })),
     ...(codingData?.history ?? []).map(iv => ({
