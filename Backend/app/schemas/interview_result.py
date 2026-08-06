@@ -44,10 +44,16 @@ class InterviewInfoResponse(BaseModel):
 class InterviewReportResponse(BaseModel):
 
     overall_score: float | None
-    strengths: str | None
-    weaknesses: str | None
-    recommendations: str | None
+    technical_level: str | None
+    communication: str | None
+
+    strengths: list[str] = []
+    weaknesses: list[str] = []
+
+    recommendation: str | None
     summary: str | None
+
+    created_at: datetime | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -61,5 +67,11 @@ class InterviewReportResponse(BaseModel):
 class InterviewResultResponse(BaseModel):
 
     interview: InterviewInfoResponse
+
     questions: list[QuestionResultResponse]
+
     report: InterviewReportResponse | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )

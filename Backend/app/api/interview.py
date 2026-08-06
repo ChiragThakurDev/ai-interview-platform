@@ -291,12 +291,25 @@ def get_interview_results(
             detail="Not authorized",
         )
 
-    results_service = InterviewResultsService(db)
+    from app.services.interview_results_runtime import (
+        InterviewResultsRuntime,
+    )
 
-    return results_service.get_results(
+    runtime = InterviewResultsRuntime(
+        db
+    )
+
+    results = runtime.get_results(
         interview_id
     )
 
+    if not results:
+        raise HTTPException(
+            status_code=404,
+            detail="Interview results not found",
+        )
+
+    return results
 
 
 
@@ -310,140 +323,84 @@ def get_interview_report(
     current_user: User = Depends(get_current_user),
 ):
 
-
     interview_service = InterviewService(db)
 
-
-    interview = (
-        interview_service
-        .get_interview(
-            interview_id
-        )
+    interview = interview_service.get_interview(
+        interview_id
     )
 
-
     if not interview:
-
         raise HTTPException(
             status_code=404,
             detail="Interview not found",
         )
 
-
     if interview.user_id != current_user.id:
-
         raise HTTPException(
             status_code=403,
             detail="Not authorized",
         )
 
-
     # ======================================
-    # Generate AI Report
+    # Generate Latest AI Report
     # ======================================
 
     from app.services.interview_report_runtime import (
         InterviewReportRuntime,
     )
 
-
     runtime = InterviewReportRuntime()
 
-
-    report_data = runtime.generate(
+    runtime_result = runtime.generate(
         db=db,
         interview_id=interview_id,
     )
 
-
     report_service = InterviewReportService(db)
 
+    report_payload = {
+        "overall_score": runtime_result["overall_score"],
+        "technical_level": runtime_result["report"].get(
+            "technical_level",
+            "",
+        ),
+        "communication": runtime_result["report"].get(
+            "communication",
+            "",
+        ),
+        "strengths": runtime_result["report"].get(
+            "strengths",
+            [],
+        ),
+        "weaknesses": runtime_result["report"].get(
+            "weaknesses",
+            [],
+        ),
+        "recommendation": runtime_result["report"].get(
+            "recommendation",
+            "",
+        ),
+        "summary": runtime_result["report"].get(
+            "summary",
+            "",
+        ),
+    }
 
-    report = report_service.create_report(
+    existing_report = report_service.get_report(
+        interview_id
+    )
+
+    if existing_report:
+
+        return report_service.update_report(
+            interview_id=interview_id,
+            report_data=report_payload,
+        )
+
+    return report_service.create_report(
         interview_id=interview_id,
-        report_data={
-            **report_data["report"],
-            "overall_score": report_data["overall_score"],
-        },
+        report_data=report_payload,
     )
-
-
-    return report
-
-    # ======================================
-    # Generate Runtime Report
-    # ======================================
-
-    runtime = InterviewReportRuntime()
-
-
-    generated_report = (
-        runtime.generate(
-            db=db,
-            interview_id=interview_id,
-        )
-    )
-
-
-
-    report_data = generated_report["report"]
-
-
-
-    # ======================================
-    # Save Report
-    # ======================================
-
-    saved_report = (
-        report_service
-        .create_report(
-            interview_id=interview_id,
-            report_data={
-                "overall_score":
-                    generated_report["overall_score"],
-
-                "technical_level":
-                    report_data.get(
-                        "technical_level",
-                        "",
-                    ),
-
-                "communication":
-                    report_data.get(
-                        "communication",
-                        "",
-                    ),
-
-                "strengths":
-                    report_data.get(
-                        "strengths",
-                        [],
-                    ),
-
-                "weaknesses":
-                    report_data.get(
-                        "weaknesses",
-                        [],
-                    ),
-
-                "recommendation":
-                    report_data.get(
-                        "recommendation",
-                        "",
-                    ),
-
-                "summary":
-                    report_data.get(
-                        "summary",
-                        "",
-                    ),
-            },
-        )
-    )
-
-
-    return saved_report
-
 
 @router.post(
     "/{interview_id}/finish",
