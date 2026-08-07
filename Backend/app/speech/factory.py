@@ -1,6 +1,7 @@
 from app.core.config import settings
-from app.speech.base import SpeechProvider
-from app.speech.faster_whisper_provider import (
+
+from app.speech.providers.base import BaseSpeechProvider
+from app.speech.providers.faster_whisper_provider import (
     FasterWhisperProvider,
 )
 
@@ -8,7 +9,7 @@ from app.speech.faster_whisper_provider import (
 class SpeechFactory:
 
     @staticmethod
-    def get_provider() -> SpeechProvider:
+    def get_provider() -> BaseSpeechProvider:
 
         if settings.speech_provider == "faster-whisper":
             return FasterWhisperProvider()

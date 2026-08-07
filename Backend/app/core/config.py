@@ -234,6 +234,12 @@ class Settings(BaseSettings):
 
     enable_auto_language_detection: bool = True
 
+    # ======================================
+    # Speech
+    # ======================================
 
+    speech_provider: str = "faster-whisper"
+
+    whisper_model: str = "base"
 
 settings = Settings()
